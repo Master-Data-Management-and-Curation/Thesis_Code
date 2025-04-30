@@ -3,9 +3,21 @@ on adding functionalities to some NOMAD parsers for electronic structure codes.
 
 In particular:
 
+# Fixing NOMAD issues in the parsing and writing/displaying of chemical composition, 
+# atom coordinates, simulation cell
+
+New information, pointing to the need of having a ns.db file within a /SAVE subfolder 
+in Yambo uploads in order for NOMAD to be able to parse and display chemical composition, atom coordinates, simulation cell:
+a) NOMAD GitHub, in the Issues section for electronic-parsers: https://github.com/nomad-coe/electronic-parsers/issues:
+  Issues: "Add warning to yambo parser when ns.db file is not present", "Add search for ns.db file in Yambo when not in default folder"
+b) my detailed Discord thread on this subject, to which (a) is pointing: https://discord.com/channels/1201445470485106719/1208029192881442866/threads/1351201658440519761
+
 parser.py (from https://github.com/emolteni/electronic-parsers/tree/develop/electronicparsers/yambo): 
 modified NOMAD Yambo parser where I have fixed an issue about a mismatch between 
-total number of coordinates and total number of atoms.
+total number of coordinates and total number of atoms, due to NOMAD incorrectly using the Yambo 
+max_n_atoms variable (maximum of the numbers of atoms of all the chemical species present in the system)
+instead of the n_atoms one (actual number of atoms of a given chemical species) for allocating
+the number of lines for the atom coordinates of each chemical species
 
 /CH4_db_minimal (from https://github.com/emolteni/electronic-parsers/tree/develop/tests/data/yambo): 
 test folder for the NOMAD electronic-parsers/test/data/yambo folder, 
