@@ -3,7 +3,7 @@ on adding functionalities to some NOMAD parsers for electronic structure codes.
 
 In particular:
 
-# Fixing NOMAD issues in the parsing and writing/displaying of chemical composition, 
+# /Yambo_atom_coords: Fixing NOMAD issues in the parsing and writing/displaying of chemical composition, 
 # atom coordinates, simulation cell
 
 New information, pointing to the need of having a ns.db file within a /SAVE subfolder 
@@ -26,4 +26,14 @@ for the above-mentioned implementation regarding atom coordinates
 test_yamboparser.py (from https://github.com/emolteni/electronic-parsers/tree/develop/tests):
 file for running all the NOMAD yambo tests present in https://github.com/emolteni/electronic-parsers/tree/develop/tests/data/yambo,
 where I have added the part regarding our test folder /CH4_db_minimal
+
+
+# /Yambo_spectra: adding spectra parsing functionality in the NOMAD Yambo parser 
+
+Spectra_plotting_EMvers_forgithubrepo.ipynb: our local parser for Yambo spectra only.
+This version works on jupyterlab;  the corresponding adapted version does not work yet in our Oasis 
+
+o-R_methylox_TDLDA.alpha_q1_slepc_alda_bse: Yambo spectrum file to be parsed
+
+
 
