@@ -1,6 +1,6 @@
 # FE-SEM Data Processing Pipeline
 
-This repository describe the pipeline to extract, transform and combine data from Excel files, TIFF images metadata, and ultimately preparing data for Nexus format generation. It includes the following scripts:
+This repository describe the pipeline to extract, transform and combine data from Excel files, TIFF images metadata, and ultimately preparing data for NeXus format generation. It includes the following scripts:
 
 - `excel_to_json.py`: Converts Excel sheets into structured JSON files.
 - `combine_json.py`: Merges sample and experiment data into unified JSON files.
