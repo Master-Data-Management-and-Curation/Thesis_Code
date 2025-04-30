@@ -17,7 +17,7 @@ To add this plugin to your NOMAD Oasis installation, follow these steps:
 2.  Add this plugin repository as a git submodule using the following command:
 
     ```bash
-    git submodule add [https://github.com/GiovanniCastorina/nomad-plugin-qutip](https://github.com/GiovanniCastorina/nomad-plugin-qutip) packages/nomad-plugin-qutip
+    git submodule add https://github.com/GiovanniCastorina/nomad-plugin-qutip packages/nomad-plugin-qutip
     ```
 
 3.  After adding the submodule, you might need to rebuild or restart your NOMAD Oasis instance for the changes to take effect (follow the standard procedures for your specific NOMAD setup).
