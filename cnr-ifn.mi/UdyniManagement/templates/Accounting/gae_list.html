@@ -1,0 +1,51 @@
+{% extends "UdyniManagement/page.html" %}
+{% block content %}
+
+<a href="{% url 'acc_gae_add' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Add GAE">
+  <span class="icon text-white-50">
+      <i class="fas fa-circle-plus"></i>
+  </span>
+  <span class="text">Add GAE</span>
+</a>
+
+<div class="card mb-4">
+  <div class="card-body table-responsive">
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover">
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Included in funding</th>
+          <th>Actions</th>
+        </tr>
+      <thead>
+      <tbody>
+        {% for gae in object_list %}
+          <tr>
+            <td>{{ gae.project }}</td>
+            <td>{{ gae.name }}</td>
+            <td>{{ gae.description }}</td>
+            <td>
+              {% if gae.splitcontab_set.all.count %}
+                <span class="text-warning ml-4"><i class="fas fa-check" aria-hidden="true"></i><span class="sr-only">Included</span></span>
+              {% else %}
+                {% if gae.include_funding %}
+                  <span class="text-success ml-4"><i class="fas fa-check" aria-hidden="true"></i><span class="sr-only">Included</span></span>
+                {% else %}
+                  <span class="text-danger ml-4"><i class="fas fa-xmark" aria-hidden="true"></i><span class="sr-only">Included</span></span>
+                {% endif %}
+              {% endif %}
+            </td>
+            <td class="col-actions">
+              <a href="{% url 'acc_gae_mod' pk=gae.id %}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+              <a href="{% url 'acc_gae_del' pk=gae.id %}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

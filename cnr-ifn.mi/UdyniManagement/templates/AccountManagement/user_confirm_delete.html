@@ -1,0 +1,60 @@
+{% extends "UdyniManagement/page.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form action="" method="post">
+      {% csrf_token %}
+      <div>
+        <div class="text my-2">
+          Are you sure you want to delete user <b>{{ object.username }}</b> ({{ object.first_name }} {{ object.last_name }})?
+        </div>
+        <div class="alert alert-warning" role="alert">
+          Please note however that if you do not delete the user also in the LDAP directory
+          it will still be abel to login. If you just want to disable access you might want to consider setting the user as not active instead.
+        </div>
+        {{ form|crispy }}
+
+        <div id="ldap_alert" class="alert alert-danger" role="alert" style="display: none; ">
+          Please note that deleting a user from LDAP is not reversible!
+        </div>
+
+        <button type="submit" class="btn btn-success btn-icon-split" aria-label="Delete">
+          <span class="icon text-white-50">
+            <i class="fas fa-check"></i>
+          </span>
+          <span class="text">Yes, delete</span>
+        </button>
+        <a href="{{ back_url }}" aria-label="Cancel" class="btn btn-danger btn-icon-split">
+          <span class="icon text-white-50">
+            <i class="fas fa-xmark"></i>
+          </span>
+          <span class="text">Cancel</span>
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block page-javascript %}
+<script>
+  $('#div_id_admin').hide();
+  $('#div_id_admin_psw').hide();
+  $(document).ready(function() {
+    $('#id_delete_ldap').change(function() {
+      if(this.checked) {
+        $('#ldap_alert').show();
+        $('#div_id_admin').show();
+        $('#div_id_admin_psw').show();
+      } else {
+        $('#ldap_alert').hide();
+        $('#div_id_admin').hide();
+        $('#div_id_admin_psw').hide();
+      }
+    });
+  });
+</script>
+{% endblock %}

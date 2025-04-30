@@ -1,0 +1,81 @@
+{% extends "UdyniManagement/page.html" %}
+{% block content %}
+
+{% if can_edit_lab %}
+<a href="{% url 'laboratory_add' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Add laboratory">
+  <span class="icon text-white-50">
+      <i class="fas fa-circle-plus"></i>
+  </span>
+  <span class="text">Add laboratory</span>
+</a>
+{% endif %}
+
+{% regroup object_list by laboratory as exp_station_grouped_by_lab_list %}
+
+{% for laboratory in laboratory_list %}
+  <div class="card mb-4">
+    <div class="card-header">
+      <h6 class="m-0 font-weight-bold text-primary"> Name: {{ laboratory.name }}</h6>
+      <h6 class="m-0 font-weight-bold text-primary"> Description: {{ laboratory.description }}</h6>
+      <h6 class="m-0 font-weight-bold text-primary"> Location: {{ laboratory.location }}</h6>
+      {% if can_edit_lab %}
+        <a href="{% url 'laboratory_mod' pk=laboratory.laboratory_id %}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+        <a href="{% url 'laboratory_del' pk=laboratory.laboratory_id %}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+      {% endif %}
+    </div>
+    <div class="card-body table-responsive">
+      {% if can_edit_station %}
+      <a href="{% url 'experimentalstation_add' laboratory_id=laboratory.laboratory_id%}" class="btn btn-primary btn-icon-split mb-4" aria-label="Add experimental station">
+        <span class="icon text-white-50">
+            <i class="fas fa-circle-plus"></i>
+        </span>
+        <span class="text">Add experimental station</span>
+      </a>
+      {% endif %}
+      
+      {% for group in exp_station_grouped_by_lab_list %}
+        {% if group.grouper == laboratory %}
+          <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Responsible</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for experimentalstation in group.list %}
+                <tr>
+                  <td>{{ experimentalstation.name }}</td>
+                  <td>{{ experimentalstation.description }}</td>
+                  <td>{{experimentalstation.responsible}} - Email: {{ experimentalstation.responsible.email }}</td>
+                  <td>{{ experimentalstation.status }}</td>
+                  <td class="col-actions">
+                    {% if can_edit_station %}
+                      <a href="{% url 'experimentalstation_mod' pk=experimentalstation.station_id %}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+                      <a href="{% url 'experimentalstation_del' pk=experimentalstation.station_id %}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+                    {% endif %}
+                    {% if perms.Experiments.experiment_view %}
+                      <a href="{% url 'experiment_view' station_id=experimentalstation.station_id %}"  class="btn btn-sm btn-primary btn-icon-split" aria-label="Show experiments">
+                        <span class="icon text-white-50">
+                          <i class="fas fa-arrow-right"></i>
+                        </span>
+                        <span class="text">Show experiments</span>
+                      </a>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %} 
+            </tbody>
+          </table>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+{% empty %}
+{% endfor %}
+
+
+{% endblock %}

@@ -1,0 +1,155 @@
+{% extends "UdyniManagement/page.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<form action="" method="post">
+  <div class="card mb-2">
+    <div class="card-body">
+      {% crispy form %}
+    </div>
+  </div>
+
+  <div class="card border-left-secondary mb-4">
+    <div class="card-body d-flex flex-row">
+      <div class="mr-auto">
+        Total hours: <b><span id="total_hours"></span></b>
+      </div>
+      <button type="submit" class="btn btn-success btn-icon-split" aria-label="Save">
+        <span class="icon text-white-50">
+          <i class="fas fa-floppy-disk"></i>
+        </span>
+        <span class="text">Save</span>
+      </button>
+      <a href="{% url 'reporting_view' %}" aria-label="Cancel" class="btn btn-danger btn-icon-split">
+        <span class="icon text-white-50">
+          <i class="fas fa-xmark"></i>
+        </span>
+        <span class="text">Cancel</span>
+      </a>
+    </div>
+  </div>
+</form>
+
+{% endblock %}
+
+{% block page-javascript %}
+<script>
+
+function update_total_hours() {
+  let hours = 0;
+  $("input[name^=hours_input_]").each( function() {
+    if($(this).val() != "") {
+      hours += parseFloat($(this).val());
+    }
+  });
+  $("#total_hours").html(hours.toString());
+}
+
+let last_wp = 1;
+$(document).ready(function() {
+  $("#add_wp").click(function(){
+    obj = $("#wp_"+last_wp.toString()).clone();
+    new_wp = last_wp + 1
+    obj.prop('id', "wp_"+new_wp.toString());
+    // Update DIV IDs
+    obj.find("div").each(function() {
+      m = $(this).prop('id').match(/^(.*)_(\d+)$/);
+      if(m != null) {
+        $(this).prop('id', m[1]+"_"+new_wp.toString());
+      }
+    });
+    obj.find("select[id^='id_wp_']").each(function() {
+      $(this).prop('name', "wp_"+new_wp.toString());
+      $(this).prop('id', "id_wp_"+new_wp.toString());
+    });
+    obj.find("input[id^='id_hours_input_'").each(function() {
+      $(this).prop('name', "hours_input_"+new_wp.toString());
+      $(this).prop('id', "id_hours_input_"+new_wp.toString());
+      $(this).val('0');
+      $(this).change(function() { update_total_hours(); });
+    });
+    obj.find("input[id^='id_has_missions_']").each(function() {
+      $(this).prop('name', "has_missions_"+new_wp.toString());
+      $(this).prop('id', "id_has_missions_"+new_wp.toString());
+      $(this).prop('checked', false);
+    });
+    obj.find("label").each(function() {
+      m = $(this).prop('for').match(/^(.*)_(\d+)$/);
+      if(m != null) {
+        $(this).prop('for', m[1]+"_"+new_wp.toString());
+      }
+    });
+    last_wp = new_wp;
+    obj.appendTo("#wp_reporting");
+  });
+  // Update total hours at page load
+  update_total_hours();
+
+  // Trigger total hours update on any change
+  $("input[name^=hours_input_]").change(function() {
+    update_total_hours();
+  });
+});
+
+$( function() {
+  $( "#id_rp_start" ).datepicker( {
+    dateFormat: "dd/mm/yy",
+    changeYear: true,
+    changeMonth: true,
+  } );
+  $( "#id_rp_end" ).datepicker( {
+    dateFormat: "dd/mm/yy",
+    changeYear: true,
+    changeMonth: true,
+  } );
+} );
+
+$("#id_project").change(function () {
+  var project = $(this).val();
+  $.ajax({
+    url: '{% url "reporting_update_wps" %}',
+    data: {
+      'project': project,
+    },
+    headers: {
+      'X-CSRFToken': Cookies.get('csrftoken'),
+    },
+    method: "POST",
+    success: function (response) {
+      var new_wps = response['wps'];
+      $("#wp_reporting select").each( function() {
+        let obj = $(this)
+        obj.empty();
+        obj.append($('<option>', { value : ""}).text("---------"));
+        $.each(new_wps, function(key, value) {
+          obj.append($('<option>', { value : value.pk }).text(value.name));
+        });
+      });
+    }
+  });
+});
+
+$("#id_researcher").change(function () {
+  var researcher = $(this).val();
+  $.ajax({
+    url: '{% url "reporting_update_costs" %}',
+    data: {
+      'researcher': researcher,
+    },
+    headers: {
+      'X-CSRFToken': Cookies.get('csrftoken'),
+    },
+    method: "POST",
+    success: function (response) {
+      var new_costs = response['costs'];
+      $("#id_cost").empty();
+      $("#id_cost").append($('<option>', { value : ""}).text("---------"));
+      $.each(new_costs, function(key, value) {
+        $("#id_cost").append($('<option>', { value : value.pk }).text(value.name));
+      });
+    }
+  });
+});
+</script>
+
+{% endblock %}

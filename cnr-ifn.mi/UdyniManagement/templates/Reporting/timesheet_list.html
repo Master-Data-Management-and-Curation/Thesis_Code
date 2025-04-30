@@ -1,0 +1,61 @@
+{% extends "UdyniManagement/page.html" %}
+
+{% block content %}
+
+{% for researcher, data in list.items %}
+  <div class="card mb-4">
+    <div class="card-header">
+      <h6 class="m-0 font-weight-bold text-primary">{{ researcher }}</h6>
+    </div>
+    <div class="card-body">
+      {% for year in data.years %}
+        <div class="d-flex flex-row border-bottom">
+          <div class="align-self-end">Year: <b>{{ year }}</b></div>
+          <button class="btn btn-primary btn-sm ml-auto" type="button" data-toggle="collapse" data-target="#detail_{{ data.rid }}_{{ year }}" aria-expanded="false" aria-controls="detail_{{ data.rid }}_{{ year }}">
+            <i class="fa-solid fa-caret-down text-white"></i>
+          </button>
+        </div>
+        <div class="card collapse mb-4" id="detail_{{ data.rid }}_{{ year }}">
+          <div class="card-body text">
+
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endfor %}
+
+{% endblock %}
+
+{% block page-javascript %}
+
+<script>
+
+  $(document).ready(function() {
+    $("div[id^='detail_']").on('show.bs.collapse', function(e) {
+      let id = e.target.id;
+
+      found = id.match(/^detail_(\d+)_(\d+)$/);
+      if(found) {
+        rid = parseInt(found[1]);
+        year = parseInt(found[2]);
+
+        // Get root to display loaded data
+        let root = $(this).children('.card-body').first();
+        root.html('<div class="d-flex justify-content-center"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>');
+
+        // Fetch data
+        $.get("{% url 'timesheets_ajax_check' %}?rid="+rid+"&year="+year, function(data) {
+            // Show content
+            root.html(data);
+          })
+          .fail(function() {
+            root.html('<div class="text-danger">Loading failed.</div>');
+          });
+      }
+    });
+  });
+
+</script>
+
+{% endblock %}

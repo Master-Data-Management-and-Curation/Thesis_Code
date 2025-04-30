@@ -1,0 +1,36 @@
+{% extends "UdyniManagement/generic_form.html" %}
+{% block page-javascript %}
+
+<script type="text/javascript">
+
+  var projects = [];
+
+  $(document).ready(function() {
+    $.get("{% url 'sigla_progetti' %}", function(data) {
+      projects = data['elements'];
+      // Remove all options
+      $('#id_sigla_progetti').find('option').remove().end().append('<option value="">None</option>');
+
+      $.each(projects, function(key, value) {
+        $('#id_sigla_progetti').append('<option value="'+key+'">'+key+': '+value.desc+'</option>');
+      });
+      if($('#id_sigla_name').val() != "") {
+        $('#id_sigla_progetti').val($('#id_sigla_name').val());
+      } else {
+        $('#id_sigla_progetti').val("");
+      }
+      // Start Select2
+      $('#id_sigla_progetti').select2();
+      $('#id_sigla_progetti').change(function() {
+        prj = $(this).val();
+        $('#id_sigla_name').val(prj);
+        $('#id_sigla_id').val(projects[prj].id);
+        if(projects[prj].cup) {
+          $('#id_sigla_cup').val(projects[prj].cup);
+        }
+      });
+    });
+  });
+</script>
+
+{% endblock %}

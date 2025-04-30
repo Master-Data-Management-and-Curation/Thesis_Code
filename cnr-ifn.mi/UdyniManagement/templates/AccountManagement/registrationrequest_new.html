@@ -1,0 +1,20 @@
+{% autoescape off %}
+
+New registration request submitted:
+
+Name: {{ request.name }}
+Surname: {{ request.surname }}
+Email: {{ request.email }}
+
+Click this link to accept:
+{{ protocol }}://{{ domain }}{% url 'account_registration_accept' pk=request.pk %}
+
+Click this link to reject:
+{{ protocol }}://{{ domain }}{% url 'account_registration_reject' pk=request.pk %}
+
+
+You are receiving this email as authorized person to manage user registrations.
+
+The UDynI Management Intranet team
+
+{% endautoescape %}

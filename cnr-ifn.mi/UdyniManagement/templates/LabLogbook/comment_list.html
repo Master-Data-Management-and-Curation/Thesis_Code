@@ -1,0 +1,108 @@
+{% extends "UdyniManagement/page.html" %}
+
+<!-- Used for showing comments tree -->
+{% load mptt_tags %}
+
+{% block content %}
+
+<a href= "{{ back_url }}" class="btn btn-primary btn-icon-split mb-4" aria-label="{{ back_url_button_title }}">
+  <span class="icon text-white-50">
+    <i class="fas fa-arrow-left"></i>
+  </span>
+  <span class="text"> {{ back_url_button_title }}</span>
+</a>
+
+<div>
+  <a href="{% url 'comment_add' station_id=station_id experiment_id=experiment_id %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Add comment">
+    <span class="icon text-white-50">
+        <i class="fas fa-circle-plus"></i>
+    </span>
+    <span class="text">Add comment</span>
+  </a>
+</div>
+
+<a href="?show_deleted={% if not show_deleted %}true{% else %}false{% endif %}" 
+   class="btn btn-primary mb-4">
+    {% if show_deleted %}
+        Hide deleted comments
+    {% else %}
+        Show deleted comments
+    {% endif %}
+</a>
+
+{% for comment in comment_tree %}
+  {% with latest=comment.latest_content %}
+
+    <!-- show a comment only if it has not been deleted or if the user has pressed the Show deleted comments button -->
+    {% if latest.text or show_deleted %}
+      <!-- editing the last value in widthration you can increase the left distance between a comment and its parent -->
+      <div style="margin-left: {% widthratio comment.level 1 8 %}em;">
+        <div class="card mb-4">
+          <div class="card-header">
+            
+            {% if not latest.author %}
+              <h6 class="m-0 font-weight-bold" style="color: #c0392b;">AUTO GENERATED COMMENT</h6>
+            {% endif %}
+            <h6 class="m-0 font-weight-bold text-primary">Comment type: {{ comment.type }}</h6>
+            
+            {% if comment.measurement %}
+              <h6 class="m-0 font-weight-bold text-primary">Refers Measurement ID: {{ comment.measurement.measurement_id }} </h6>
+            {% endif %}
+            
+            <h6 class="m-0 font-weight-bold text-primary">Comment ID: {{ comment.comment_id }} - Content version: {{ latest.version }}</h6>
+            <h6 class="m-0 font-weight-bold text-primary">Content ID: {{ latest.comment_content_id }}</h6>
+
+            <!-- Show if the comment has been deleted -->
+            {% if not latest.author %}
+              <h6 class="m-0 font-weight-bold text-primary">Auto generated - {{ latest.timestamp }}</h6>
+            {% else %}
+              {% if not latest.text %}
+                <h6 class="m-0 font-weight-bold text-primary">Deleted by {{ latest.author }} - {{ latest.timestamp }}</h6>
+              {% else %}
+                <h6 class="m-0 font-weight-bold text-primary">Last edited by {{ latest.author }} - {{ latest.timestamp }}</h6>
+              {% endif %}
+            {% endif %}
+
+          </div>
+          <div class="card-body table-responsive">
+            <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+              <thead>
+                <tr>
+                  <th>Text</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <!-- Show if the comment has been deleted -->
+                  {% if not latest.text %}
+                    <div class="alert alert-warning">Deleted comment</div>
+                    <td style="white-space: pre-wrap;">{{ comment.latest_text_before_deletion }}</td>
+                  {% else %}
+                  <td style="white-space: pre-wrap;">{{ latest.text }}</td>
+                  {% endif %}
+                  <td class="col-actions">
+                    <!-- Show edit and delete option only for comments that are not machine generated -->
+                    {% if latest.text %}
+                      {% if latest.author %}
+                        <a href="{% url 'comment_mod' station_id=station_id experiment_id=experiment_id pk=comment.comment_id %}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+                      {% endif %}
+                      <a href="{% url 'comment_reply' station_id=station_id experiment_id=experiment_id pk=comment.comment_id %}" aria-label="Reply"><i class="fas fa-reply" aria-hidden="true"></i></a>
+                      {% if latest.author %}
+                        <a href="{% url 'comment_del' station_id=station_id experiment_id=experiment_id pk=comment.comment_id %}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+                      {% endif %}
+                    {% endif %}
+                    <a href="{% url 'comment_content_history' station_id=station_id experiment_id=experiment_id pk=comment.comment_id %}" aria-label="See history"><i class="fas fa-history" aria-hidden="true"></i></a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  {% endwith %}
+{% endfor %}
+
+
+{% endblock %}

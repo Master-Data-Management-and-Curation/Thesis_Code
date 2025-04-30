@@ -1,0 +1,95 @@
+{% extends "UdyniManagement/page.html" %}
+{% load euro %}
+{% block content %}
+
+<a href="{% url 'acc_split_contab_detail' pk=view.kwargs.pk %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Back">
+  <span class="icon text-white-50">
+    <i class="fas fa-circle-arrow-left"></i>
+  </span>
+  <span class="text">Back</span>
+</a>
+
+<div class="card mb-4">
+  <div class="card-body table-responsive">
+    <form id="add_impegni">
+    {% csrf_token %}
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Esercizio originale</th>
+          <th>Numero</th>
+          <th>Voce</th>
+          <th>Descrizione</th>
+          <th>Importo</th>
+          <th>Pagato</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for key, impegno in impegni.items %}
+          <tr>
+            <td><input type="checkbox" id="check_{{ key }}" name="{{ key }}"/></td>
+            <td>{{ impegno.esercizio_orig }}</td>
+            <td>{{ impegno.numero }}</td>
+            <td>{{ impegno.voce.voce }}</td>
+            <td>{{ impegno.description }}</td>
+            <td>{{ impegno.importo | euro }}</td>
+            <td>{{ impegno.pagato | euro }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <button type="submit" class="btn btn-success btn-icon-split" aria-label="Save">
+      <span class="icon text-white-50">
+        <i class="fas fa-floppy-disk"></i>
+      </span>
+      <span class="text">Save</span>
+    </button>
+    </form>
+  </div>
+</div>
+
+<div class="card border-left-danger mb-2" role="alert" id="error-message-box" style="display:none">
+  <div class="card-body d-flex flex-row p-2 align-items-center">
+    <div class="p-2">
+      <i class="fas fa-triangle-exclamation text-lg text-danger" aria-hidden="true"></i>
+      <span class="sr-only">Error:</span>
+    </div>
+    <div class="d-flex flex-column p-2" id="error-message-box-content"></div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block page-javascript %}
+<script type="text/javascript">
+
+$(document).ready(function() {
+  $('#add_impegni').submit(function(e) {
+    e.preventDefault(); // avoid to execute the actual submit of the form.
+
+    $.ajax({
+        type: "POST",
+        url: "{% url 'acc_ajax_split_impegni' pk=view.kwargs.pk %}",
+        data: $(this).serialize(), // serializes the form's elements.
+        success: function(data) {
+          if(data.result == 'ok') {
+            // Redirect to splitted accounting details
+            window.location.href = "{% url 'acc_split_contab_detail' pk=view.kwargs.pk %}";
+          } else {
+            // Handle errors
+            root = $("#error-message-box-content");
+            root.html("");
+            for (let i = 0; i < data.errors.length; i++) {
+              root.append($('<div class="text">' + data.errors[i] + '</div>'));
+            }
+            $("#error-message-box").show();
+          }
+        },
+    });
+  });
+});
+
+</script>
+
+{% endblock %}

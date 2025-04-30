@@ -1,0 +1,17 @@
+{% autoescape off %}
+
+Dear {{ request.name }} {{ request.surname }},
+
+your registration request has been accepted and a new account has been created.
+Your username is: {{ username }}.
+
+Please visit this link to login with your password.
+{{ protocol }}://{{ domain }}{% url 'account_login' %}
+
+If you forgot the password used during the registration, you can reset it here, using the email address that you provided:
+{{ protocol }}://{{ domain }}{% url 'account_password_reset' %}
+
+
+The UDynI Management Intranet team
+
+{% endautoescape %}

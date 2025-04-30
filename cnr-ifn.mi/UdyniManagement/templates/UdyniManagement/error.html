@@ -1,0 +1,21 @@
+{% extends "UdyniManagement/page.html" %}
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-md-9 col-lg-7">
+    <div class="card border-left-danger mb-4 alert alert-danger">
+      <div class="card-body">
+        <div class="row align-items-center justify-content-left">
+          <div class="ml-2 text-danger">
+            <i class="fa-solid fa-2x fa-circle-exclamation"></i>
+          </div>
+          <div class="h5 ml-4 mb-0 font-weight-bold">
+            {{ error }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

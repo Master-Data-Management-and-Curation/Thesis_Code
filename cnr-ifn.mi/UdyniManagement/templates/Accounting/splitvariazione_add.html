@@ -1,0 +1,93 @@
+{% extends 'UdyniManagement/generic_form.html' %}
+{% load euro %}
+
+{% block content %}
+{{ block.super }}
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h6 class="m-0 font-weight-bold text-primary">Variazioni on splitted accounting</h6>
+  </div>
+  <div class="card-body table-responsive">
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover" id="">
+      <thead>
+        <tr>
+          <th>Origine</th>
+          <th>Voce origine</th>
+          <th>Destinazione</th>
+          <th>Voce destinazione</th>
+          <th>Importo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in variazioni_split %}
+          <tr>
+            <td>{{ v.src_contab }}</td>
+            <td>{{ v.src_voce }}</td>
+            <td>{{ v.dst_contab }}</td>
+            <td>{{ v.dst_voce }}</td>
+            <td>{{ v.importo | euro }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h6 class="m-0 font-weight-bold text-primary">Variazioni on GAE {{ gae }}</h6>
+  </div>
+  <div class="card-body table-responsive">
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover" id="">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Esercizio</th>
+          <th>Voce</th>
+          <th>Descrizione</th>
+          <th>Importo</th>
+          <th>Data</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in variazioni_gae %}
+          <tr>
+            <td><a href="#" id="check_{{ s.pk }}_{{ s.voce.pk }}" aria-label="Select"><i class="fas fa-circle-check" aria-hidden="true"></i></a></td>
+            <td>{{ v.esercizio }}</td>
+            <td>{{ v.voce }}</td>
+            <td>{{ v.descrizione }}</td>
+            <td>{{ v.importo | euro }}</td>
+            <td>{{ v.data }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block page-javascript %}
+
+<script>
+
+  $(document).ready(function() {
+    $("a[id^='check']").click(function(e) {
+      m = $(this).attr('id').match(/^check_(\d+)_(\d+)$/);
+      if(m != null) {
+        e.preventDefault();
+        v = parseInt(m[2]);
+        $("#id_voce").val(m[2]);
+        line = $(this).parent().parent();
+        $("#table_stanziamenti tr").each(function() { $(this).removeClass('table-primary')});
+        line.addClass('table-primary');
+        y = line.children()[1].textContent;
+        $("#id_year").val(y);
+      }
+    });
+  });
+
+</script>
+
+{% endblock %}

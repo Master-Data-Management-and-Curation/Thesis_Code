@@ -1,0 +1,36 @@
+{% extends "UdyniManagement/page.html" %}
+{% load euro %}
+{% block content %}
+
+<div class="card mb-4">
+  <div class="card-body table-responsive">
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover">
+      <thead>
+        <tr>
+          <th>Esercizio originale</th>
+          <th>Esercizio</th>
+          <th>Impegno</th>
+          <th>Voce</th>
+          <th>Descrizione</th>
+          <th>Impegnato</th>
+          <th>Pagato</th>
+        </tr>
+      <thead>
+      <tbody>
+        {% for im in object_list %}
+          <tr>
+            <td>{{ im.esercizio_orig }}</td>
+            <td>{{ im.esercizio }}</td>
+            <td>{{ im.numero }}</td>
+            <td>{{ im.voce.voce }}</td>
+            <td>{{ im.description }}</td>
+            <td>{% if im.im_competenza %}{{ im.im_competenza | euro }}{% else %}{{ im.im_residui | euro }}{% endif %}</td>
+            <td>{% if im.pagato_competenza %}{{ im.pagato_competenza | euro }}{% else %}{{ im.pagato_residui | euro }}{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

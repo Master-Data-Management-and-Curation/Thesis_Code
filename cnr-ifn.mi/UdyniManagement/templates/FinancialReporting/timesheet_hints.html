@@ -1,0 +1,281 @@
+{% extends "UdyniManagement/page.html" %}
+{% block content %}
+
+<div class="card" id="edit-dialog" title="Edit">
+  <div class="card-body">
+    <input type="hidden" value="" id="edit-id" />
+    <input class="form-control" type="number" min="0" max="0" step="0.1" id="edit-value" value="0.0" />
+  </div>
+</div>
+
+<div class="alert alert-danger d-none" role="alert" id="error-message">
+  <span class="ui-icon ui-icon-alert"></span>
+  <span id="error-text"></span>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body table-responsive">
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+      <thead>
+        <th>Project / WP</th>
+        <th class="text-center">Total</th>
+        <th class="text-center">Prev.</th>
+        <th class="text-center">Jan</th>
+        <th class="text-center">Feb</th>
+        <th class="text-center">Mar</th>
+        <th class="text-center">Apr</th>
+        <th class="text-center">May</th>
+        <th class="text-center">Jun</th>
+        <th class="text-center">Jul</th>
+        <th class="text-center">Aug</th>
+        <th class="text-center">Sep</th>
+        <th class="text-center">Oct</th>
+        <th class="text-center">Nov</th>
+        <th class="text-center">Dec</th>
+        <th class="text-center">Next</th>
+        <th class="text-center">Sum</th>
+      </thead>
+      <tbody>
+        {% for project in project_list %}
+          <tr>
+            <td class="no-border">{{ project.name }}</td>
+            <td class="no-border text-center"><span id="prj_{{ project.id }}">{{ project.hours }}</span></td>
+            {% for h in project.bymonth %}
+              <td class="no-border text-center{% if project.id == -1 and h < 0 %} text-danger{% endif %}"><span class="editable-cell" id="m_{{ forloop.counter0 }}_{{ project.id }}">{{ h | floatformat:-1 }}</span></td>
+            {% endfor %}
+            <td class="no-border text-center"><span class="prjsum-cell" id="sum_{{ project.id }}">{{ project.hours }}</span></td>
+          </tr>
+          {% if project.has_missions %}
+            <tr>
+              <td colspan="2" class="no-border text-right">Mission hours:</td>
+              {% for h in project.mission_hours %}
+                <td class="no-border text-center"><span id="mission_{{ forloop.counter0 }}_{{ project.id }}">{{ h | floatformat:-1 }}</span></td>
+              {% endfor %}
+              <td class="no-border text-center"></td>
+            </tr>
+          {% endif %}
+          <tr>
+            <td colspan="2" class="hours-hint text-right">Available hours:</td>
+            {% for h in project.ava_hours %}
+              <td class="text-center"><span class="hours-hint" id="ava_{{ forloop.counter0 }}_{{ project.id }}">{{ h | floatformat:-1 }}</span></td>
+            {% endfor %}
+            <td class="text-center"><span class="sum-mismatch" id="mismatch_{{ project.id }}"></span></td>
+          </tr>
+
+        {% endfor %}
+        <tr>
+          <td colspan="3">Total worked hours</td>
+          {% for h in ts_wh %}
+            <td class="text-center"><span id="tot_{{ forloop.counter }}">{{ h | floatformat:-1 }}</span></td>
+          {% endfor %}
+          <td></td>
+          <td class="text-center">{{ total_hours }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="d-flex mb-4">
+      <button id="save-button" type="button" class="btn btn-primary btn-icon-split mr-4" aria-label="Save">
+        <span class="icon text-white-50">
+          <i class="fas fa-floppy-disk"></i>
+        </span>
+        <span class="text">Save</span>
+      </button>
+      <a href="{% url 'timesheets_view' %}" aria-label="Cancel" class="btn btn-danger btn-icon-split mr-4">
+        <span class="icon text-white-50">
+          <i class="fas fa-xmark"></i>
+        </span>
+        <span class="text">Cancel</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block page-javascript %}
+
+<script type="text/javascript">
+
+function dumpData() {
+  var data = {};
+  $('[id^=m_]').each(function() {
+    m = $(this).attr('id').match(/^m_(\d+)_(-?\d+)$/);
+    if(m != null) {
+      prj = parseInt(m[2]);
+      month = parseInt(m[1]);
+
+      if(prj != -1 && month >= 1 && month <= 12) {
+        if(!(prj in data)) {
+          data[prj] = {};
+        }
+        data[prj][month] = parseFloat($(this).text());
+      }
+    }
+  });
+  return JSON.stringify(data);
+}
+
+function updateHintsTable(id, value) {
+  // Match ID and extract project ID and month
+  m = id.match(/^m_(\d+)_(\d+)$/);
+  if(m == null)
+    return;
+  month = parseInt(m[1]);
+  prj = parseInt(m[2]);
+
+  // Update cell
+  $("#"+id).text(value.toFixed(1));
+  $("#"+id).addClass("text-success");
+
+  // Sum line and column
+  sum_line = 0;
+  sum_month = 0;
+  $('[id^=m_]').each(function() {
+    m = $(this).attr('id').match(/^m_(\d+)_(-?\d+)$/);
+    if(m != null && m[2] != -1) {
+      if(m[2] == prj) {
+        sum_line += parseFloat($(this).text());
+      }
+      if(m[1] == month) {
+        sum_month += parseFloat($(this).text());
+      }
+    }
+  });
+
+  // For sum line and column we should also include mission hours
+  $('span[id^=mission_]').each(function() {
+    m = $(this).attr('id').match(/^mission_(\d+)_(-?\d+)$/);
+    if(m != null && m[2] != -1) {
+      if(m[2] == prj) {
+        sum_line += parseFloat($(this).text());
+      }
+      if(m[1] == month) {
+        sum_month += parseFloat($(this).text());
+      }
+    }
+  });
+
+  // Update line sum
+  $("#sum_"+prj).text(sum_line.toFixed(1));
+  tot_line = parseFloat($("#prj_"+prj).text());
+  if(tot_line != sum_line) {
+    $("#sum_"+prj).addClass("text-danger");
+    delta = tot_line - sum_line;
+    $("#mismatch_"+prj).text("Error: " + delta.toFixed(1));
+  } else {
+    $("#sum_"+prj).removeClass("text-danger");
+    $("#mismatch_"+prj).text("");
+  }
+
+  // Update internal activities
+  tot_month = parseFloat($("#tot_"+month).text());
+  delta = tot_month - sum_month;
+  $("#m_"+month+"_-1").text(delta.toFixed(1));
+  if(delta >= 0) {
+    $("#m_"+month+"_-1").parent().removeClass('text-danger');
+  } else {
+    $("#m_"+month+"_-1").parent().addClass('text-danger');
+  }
+}
+
+$(document).ready(function() {
+
+  // Create edit dialog
+  $("#edit-dialog").dialog({
+    modal: true,
+    autoOpen: false,
+    show: {
+      effect: "fade",
+      duration: 300
+    },
+    hide: {
+      effect: "fade",
+      duration: 300
+    },
+    buttons: [
+      {
+        text: "Update",
+        click: function() {
+          $(this).dialog( "close" );
+          // Need to update cell
+          val = parseFloat($("#edit-value").val());
+          if(isNaN(val))
+            return;
+          id = $("#edit-id").val();
+          updateHintsTable(id, val);
+        }
+      },
+      {
+        text: "Cancel",
+        click: function() {
+          $(this).dialog( "close" );
+        }
+      },
+    ]
+  });
+
+  // Enforce minimum and maximum
+  $("#edit-value").change(function() {
+    var max = parseInt($(this).attr('max'));
+    var min = parseInt($(this).attr('min'));
+    if($(this).val() > max) {
+      $(this).val(max);
+    } else if ($(this).val() < min) {
+      $(this).val(min);
+    }
+  });
+
+  // Enable double click action to edit values
+  $(".editable-cell").dblclick(function(){
+    id = $(this).attr('id');
+    // Extract period ID and month ID
+    m = id.match(/^m_(\d+)_(\d+)$/);
+    if(m == null)
+      return;
+    rp = parseInt(m[2]);
+    month = parseInt(m[1]);
+    // Ignore internal time
+    if(rp == -1)
+      return;
+    // Set value
+    $("#edit-value").val($(this).text());
+    // Set maximum number of hours
+    max = parseFloat($("#ava_" + month + "_" + rp).text());
+    $("#edit-value").attr('max', max);
+    // Set current ID
+    $("#edit-id").val(id);
+    // Open dialog
+    $("#edit-dialog").dialog("open");
+  });
+
+  // Save button. Save hints into DB. Unless there are inconsistencies
+  $("#save-button").click(function() {
+    data = dumpData();
+    $.ajax({
+      url: '{% url 'timesheets_ajax_savehints' rid year %}',
+      headers: {
+        'X-CSRFToken': Cookies.get('csrftoken'),
+      },
+      type: 'post',
+      dataType: 'json',
+      contentType: 'application/json',
+      success: function (data) {
+        if(data['result'] == 'ok') {
+          window.location.href = "{% url 'timesheets_view' %}";
+        } else {
+          $("#error-text").text("Save failed. Error: " + data['error']);
+          $("#error-message").show();
+        }
+      },
+      error: function (jqXHR, status, error) {
+        $("#error-text").text("Save failed. Error: " + error);
+        $("#error-message").show();
+      },
+      data: dumpData(),
+    });
+  });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "UdyniManagement/page.html" %}
+{% block content %}
+
+{% for r in researchers %}
+  <div class="card mb-4">
+    <div class="card-header">
+      <h6 class="m-0 font-weight-bold text-primary">{{ r.researcher }}</h6>
+    </div>
+    <div class="card-body table-responsive">
+      <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+        <thead>
+          <th>Year</th>
+          <th>Periods</th>
+          <th>Missions</th>
+          <th>Hints OK</th>
+          <th>TS OK</th>
+          <th>Actions</th>
+        </thead>
+        <tbody>
+          {% for y, data in r.data.items %}
+            <tr>
+              <td>{{ y }}</td>
+              <td>{{ data.periods }}</td>
+              <td>{{ data.missions }}</td>
+              <td>{{ data.hints }}</td>
+              <td>{{ data.ts }}</td>
+              <td class="actions">
+                <a aria-label="Generate hints" title="Generate hints" href="{% url 'timesheets_generatehints' researcher=r.researcher.pk year=y %}">
+                  <i class="fas fa-lightbulb" aria-hidden="true"></i>
+                </a>
+                <a aria-label="Generate timesheets" title="Generate timesheets" href="{% url 'timesheets_generate' researcher=r.researcher.pk year=y %}">
+                  <i class="fas fa-table-list" aria-hidden="true"></i>
+                </a>
+                <a aria-label="Print timesheets" title="Print timesheets" href="{% url 'timesheets_print' researcher=r.researcher.pk year=y %}">
+                  <i class="fas fa-print" aria-hidden="true"></i>
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endfor %}
+
+{% endblock %}

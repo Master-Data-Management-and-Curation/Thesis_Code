@@ -1,0 +1,46 @@
+{% extends "UdyniManagement/page.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="card mb-4">
+  <div class="card-body">
+
+    {% if experiments_made_with_experimental_station %}
+
+        <div class="alert alert-warning" role="alert">
+          Experimental station {{ experimentalstation }} cannot be deleted since it's referred in experiments with IDs: {{ experiments_made_with_experimental_station }}.
+        </div>
+        
+        <a href="{{ back_url }}" aria-label="Cancel" class="btn btn-danger btn-icon-split">
+            <span class="icon text-white-50">
+            <i class="fas fa-xmark"></i>
+            </span>
+            <span class="text">Cancel</span>
+        </a>
+        
+    {% else %}
+
+    <p>{{ message }}</p>
+
+    <form action="" method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-success btn-icon-split" aria-label="Delete">
+        <span class="icon text-white-50">
+          <i class="fas fa-check"></i>
+        </span>
+        <span class="text">Yes, delete</span>
+      </button>
+      <a href="{{ back_url }}" aria-label="Cancel" class="btn btn-danger btn-icon-split">
+        <span class="icon text-white-50">
+          <i class="fas fa-xmark"></i>
+        </span>
+        <span class="text">Cancel</span>
+      </a>
+    </form>
+
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}

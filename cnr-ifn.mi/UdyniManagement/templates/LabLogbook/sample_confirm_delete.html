@@ -1,0 +1,54 @@
+{% extends "UdyniManagement/page.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="card mb-4">
+  <div class="card-body">
+
+    {% if sample_used_in_experiments or sample_used_in_measurements %}
+
+      {% if sample_used_in_experiments %}
+        <div class="alert alert-warning" role="alert">
+          Sample {{ sample }} cannot be deleted since it's used in experiments with IDs: {{ experiments_that_use_the_sample }}.
+        </div>
+      {% endif %}
+
+      {% if sample_used_in_measurements %}
+        <div class="alert alert-warning" role="alert">
+          Sample {{ sample }} cannot be deleted since it's used in measurements with IDs: {{ measurements_that_use_the_sample }}.
+        </div>
+      {% endif %}
+
+      <a href="{{ back_url }}" aria-label="Cancel" class="btn btn-danger btn-icon-split">
+        <span class="icon text-white-50">
+          <i class="fas fa-xmark"></i>
+        </span>
+        <span class="text">Cancel</span>
+      </a>
+    
+    {% else %}
+
+    <p>{{ message }}</p>
+
+    <form action="" method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-success btn-icon-split" aria-label="Delete">
+        <span class="icon text-white-50">
+          <i class="fas fa-check"></i>
+        </span>
+        <span class="text">Yes, delete</span>
+      </button>
+      <a href="{{ back_url }}" aria-label="Cancel" class="btn btn-danger btn-icon-split">
+        <span class="icon text-white-50">
+          <i class="fas fa-xmark"></i>
+        </span>
+        <span class="text">Cancel</span>
+      </a>
+    </form>
+
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}

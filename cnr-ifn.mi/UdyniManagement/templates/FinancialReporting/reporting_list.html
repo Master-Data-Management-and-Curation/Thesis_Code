@@ -1,0 +1,72 @@
+{% extends "UdyniManagement/page.html" %}
+{% load euro %}
+{% block content %}
+
+<a href="{% url 'reporting_add' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Add reporting period">
+  <span class="icon text-white-50">
+      <i class="fas fa-circle-plus"></i>
+  </span>
+  <span class="text">Add reporting period</span>
+</a>
+
+{% for res_name, projects in periods.items %}
+  <div class="card shadow mb-4">
+    <div class="card-header">
+      <h6 class="m-0 font-weight-bold text-primary">{{ res_name }}</h6>
+    </div>
+    <div class="card-body table-responsive">
+      <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+        <thead>
+          <tr>
+            <th>Project</th>
+            <th>Period start</th>
+            <th>Period end</th>
+            <th>WP</th>
+            <th>Hours</th>
+            <th>Cost</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for project, data in projects.items %}
+            <tr>
+              <td rowspan="{{ data.rowspan }}">{{ project }}</td>
+
+              {% for start, rp in data.periods.items %}
+                <td rowspan="{{ rp.rowspan }}">{{ rp.start }}</td>
+                <td rowspan="{{ rp.rowspan }}">{{ rp.end }}</td>
+
+                {% if rp.wps %}
+                  {% for wp_name, wp_data in rp.wps.items %}
+                    <td>{{ wp_name }}</td>
+                    <td>{{ wp_data.hours | floatformat:-1 }}</td>
+                    <td>{{ wp_data.cost | euro }}</td>
+                    <td class="col-actions">
+                      <a href="{% url 'reporting_mod' pk=wp_data.pk %}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+                      <a href="{% url 'reporting_del' pk=wp_data.pk %}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+                    </td>
+                  </tr>
+                  <tr>
+                  {% endfor %}
+                {% else %}
+                  <td></td>
+                  <td>{{ rp.hours | floatformat:-1 }}</td>
+                  <td>{{ rp.cost | euro }}</td>
+                  <td class="col-actions">
+                    <a href="{% url 'reporting_mod' pk=rp.pk %}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+                    <a href="{% url 'reporting_del' pk=rp.pk %}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+                  </td>
+                </tr>
+                <tr>
+                {% endif %}
+
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endfor %}
+
+{% endblock %}

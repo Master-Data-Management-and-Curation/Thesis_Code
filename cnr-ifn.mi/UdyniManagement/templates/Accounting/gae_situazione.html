@@ -1,0 +1,68 @@
+{% extends "UdyniManagement/page.html" %}
+{% block content %}
+
+<a href="{% url 'acc_gae_list' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Back">
+  <span class="icon text-white-50">
+      <i class="fas fa-circle-arrow-left"></i>
+  </span>
+  <span class="text">Back</span>
+</a>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex flex-row">
+      <div class="mb-4 flex-fill">
+        <select id="gae_select" class="select form-control">
+          <option value="">-------</option>
+          {% for g in gae %}
+            <option value="{{ g.pk }}">{{ g.name }} [{{ g.project }}]: {{ g.desc }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="spinner-border d-none ml-2" role="status" id="loading_spinner">
+        <span class="sr-only">Loading...</span>
+      </div>
+    </div>
+    <div class="table-responsive" id="table_situazione">
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block page-javascript %}
+
+<script>
+
+  $(document).ready(function() {
+    $("#gae_select").change(function() {
+      // GAE
+      gae = $(this).val();
+      if(gae == "") {
+        return;
+      }
+
+      // Get situazione GAE
+      let url_c = "{% url 'acc_ajax_gae_situazione' gae='999999' %}";
+      $("#loading_spinner").removeClass('d-none');
+      $.get(url_c.replace("999999", gae), function(data) {
+        $("#loading_spinner").addClass('d-none');
+        $('#table_situazione').html(data);
+      }).fail(function(jqXHR, textStatus, errorThrown) {
+        $("#loading_spinner").addClass('d-none');
+        root = $('#table_situazione');
+        root.html("");
+        if(jqXHR.status == 404) {
+          message = "GAE not found";
+        } else {
+          message = "<b>Error " + jqXHR.status + ":</b> " + errorThrown;
+        }
+        $('<div class="alert alert-danger" role="alert">'+ message +'</div>').appendTo(root);
+      });
+    });
+  });
+
+</script>
+
+{% endblock %}

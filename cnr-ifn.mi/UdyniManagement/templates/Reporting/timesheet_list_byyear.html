@@ -1,0 +1,83 @@
+{% load tr_month %}
+{% load generic %}
+
+<div class="d-flex flex-column">
+  <div class="d-flex flex-row mb-4">
+    {% if allgood %}
+      <a href="{% url 'timesheets_print' rid=researcher.pk year=year %}" target="_blank" class="btn btn-primary btn-sm btn-icon-split mr-2" aria-label="Print all">
+        <span class="icon text-white-50">
+          <i class="fas fa-print"></i>
+        </span>
+        <span class="text">Print all</span>
+      </a>
+      <div class="dropdown">
+        <button class="btn btn-primary btn-sm btn-icon-split mr-2" type="button" id="project-selector" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+          <span class="icon text-white-50">
+            <i class="fas fa-print"></i>
+          </span>
+          <span class="text" id="current-project"><i>Select project</i></span>
+          <span class="text">
+            <i class="fa-solid fa-caret-down"></i>
+          </span>
+        </button>
+        <div class="dropdown-menu" aria-labelledby="project-selector">
+          {% for project, pid in projects.items %}
+          <a class="dropdown-item" target="_blank" href="{% url 'timesheets_print' rid=researcher.pk year=year %}?pid={{ pid }}">{{ project }}</a>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover table-sm">
+      <thead>
+        <th>Month</th>
+        <th>Timesheet</th>
+        {% for project in projects %}
+          <th>{{ project }}</th>
+        {% endfor %}
+        <th>Actions</th>
+      </thead>
+      <tbody>
+        {% for line in ts %}
+          <tr>
+            <td>{{ line.month | month_num2en }}</td>
+            <td>
+              {% if line.reported %}
+                {% if line.ok %}
+                  <span class="text-success"><i class="fa-solid fa-check"></i></span>
+                {% else %}
+                  <span class="text-danger"><i class="fa-solid fa-xmark"></i></span>
+                {% endif %}
+              {% endif %}
+            </td>
+            {% for project in projects %}
+              <td>
+                {% with project_info=line.projects|dictkey:project %}
+                  {% if project_info %}
+                    {% if project_info.0 %}
+                      <span class="text-success"><i class="fa-solid fa-check"></i></span>
+                      {% if line.ok %}
+                        <a href="{% url 'timesheets_print' rid=researcher.pk year=year %}?month={{ line.month }}&pid={{ project_info.1 }}" target="_blank" aria-label="Print single project timesheet" title="Print single project timesheet"><i class="fas fa-print" aria-hidden="true"></i></a>
+                      {% endif %}
+                    {% else %}
+                      <span class="text-danger"><i class="fa-solid fa-xmark"></i></span>
+                    {% endif %}
+                  {% endif %}
+                {% endwith %}
+              </td>
+            {% endfor %}
+            <td>
+              {% if line.can_generate %}
+                <a href="{% url 'timesheets_generate' rid=researcher.pk year=year %}?month={{ line.month }}" aria-label="Generate"><i class="fas fa-gears" aria-hidden="true"></i></a>
+              {% endif %}
+              {% if line.ok and line.reported %}
+                <a href="{% url 'timesheets_print' rid=researcher.pk year=year %}?month={{ line.month }}" target="_blank" aria-label="Print"><i class="fas fa-print" aria-hidden="true"></i></a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+    </table>
+  </div>
+</div>

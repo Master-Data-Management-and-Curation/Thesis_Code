@@ -1,0 +1,33 @@
+{% extends "UdyniManagement/page.html" %}
+{% load tr_month %}
+{% block content %}
+
+<a href="{% url 'timesheets_view' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Back">
+  <span class="icon text-white-50">
+      <i class="fas fa-circle-arrow-left"></i>
+  </span>
+  <span class="text">Back</span>
+</a>
+
+<form action="" method="post">
+{% csrf_token %}
+
+<div class="card mb-4">
+  <div class="card-body">
+    {% for m in months %}
+      <div>
+        <input type="checkbox" class="checkboxinput" checked="checked" name="m_{{ m }}" id="id_m_{{ m }}" />
+        <label for="id_m_{{ m }}">{{ m | month_num2en }}
+      </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary btn-icon-split mb-2" target="_blank" aria-label="Print selected timesheets">
+      <span class="icon text-white-50">
+          <i class="fas fa-print"></i>
+      </span>
+      <span class="text">Print selected timesheets</span>
+    </button>
+  </div>
+</div>
+</form>
+
+{% endblock %}

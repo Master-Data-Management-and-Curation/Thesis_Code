@@ -1,0 +1,26 @@
+{% extends "UdyniManagement/page.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<form action="" method="post" enctype="multipart/form-data">
+{% csrf_token %}
+
+<div class="card mb-4">
+  <div class="card-body">
+      {{ form|crispy }}
+      <button type="submit" class="btn btn-success btn-icon-split" aria-label="Import">
+        <span class="icon text-white-50">
+          <i class="fas fa-file-import"></i>
+        </span>
+        <span class="text">Import</span>
+      </button>
+      <a href="{% url 'presencedata_view' %}" aria-label="Cancel" class="btn btn-danger btn-icon-split">
+        <span class="icon text-white-50">
+          <i class="fas fa-xmark"></i>
+        </span>
+        <span class="text">Cancel</span>
+      </a>
+    </div>
+  </div>
+</form>
+{% endblock %}

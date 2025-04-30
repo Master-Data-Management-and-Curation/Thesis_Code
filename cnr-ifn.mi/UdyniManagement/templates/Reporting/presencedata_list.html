@@ -1,0 +1,59 @@
+{% extends "UdyniManagement/page.html" %}
+{% block content %}
+
+{% if perms.Reporting.presences_manage or perms.Reporting.presences_manage_own %}
+<a href="{% url 'presencedata_import' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Import data">
+  <span class="icon text-white-50">
+      <i class="fas fa-circle-plus"></i>
+  </span>
+  <span class="text">Import data</span>
+</a>
+{% endif %}
+
+{% for r in researchers %}
+  <div class="card mb-4">
+    <div class="card-header">
+      <h6 class="m-0 font-weight-bold text-primary">{{ r }}</h6>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Working days</th>
+              <th>Total hours</th>
+              <th>Total hours (no missions)</th>
+              <th>Holidays</th>
+              <th>Missions</th>
+              <th>Illness</th>
+              <th>Actions</th>
+            </tr>
+          <thead>
+          <tbody>
+            {% for obj in object_list %}
+              {% if obj.researcher == r.pk %}
+                <tr>
+                  <td>{{ obj.year }}</td>
+                  <td>{{ obj.working_days }}</td>
+                  <td>{{ obj.tot_hours | floatformat:-1 }}</td>
+                  <td>{{ obj.tot_hours_nom | floatformat:-1 }}</td>
+                  <td>{{ obj.holidays }}</td>
+                  <td>{{ obj.missions }}</td>
+                  <td>{{ obj.illness_leave }}</td>
+                  <td class="col-actions">
+                    <a href="{% url 'presencedata_detailyear' researcher=obj.researcher year=obj.year %}" aria-label="Details">
+                      <i class="fa-solid fa-list" aria-hidden="true"></i>
+                    </a>
+                  </td>
+                </tr>
+              {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endfor %}
+
+{% endblock %}

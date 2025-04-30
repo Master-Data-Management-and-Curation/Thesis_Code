@@ -1,0 +1,14 @@
+{% extends "UdyniManagement/generic_form.html" %}
+{% block page-javascript %}
+
+<script type="text/javascript">
+  $(document).ready(function() {
+    $( "#id_start_date" ).datepicker( {
+      dateFormat: "dd/mm/yy",
+      changeYear: true,
+      changeMonth: true,
+    } );
+  } );
+</script>
+
+{% endblock %}

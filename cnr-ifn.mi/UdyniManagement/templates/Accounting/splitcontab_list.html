@@ -1,0 +1,63 @@
+{% extends "UdyniManagement/page.html" %}
+{% block content %}
+
+{% if perms.Accounting.splitcontab_manage %}
+<a href="{% url 'acc_split_contab_add' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Add split accounting">
+  <span class="icon text-white-50">
+      <i class="fas fa-circle-plus"></i>
+  </span>
+  <span class="text">Add split accounting</span>
+</a>
+{% endif %}
+
+{% for gae in object_list %}
+  <div class="card mb-2">
+    <a href="#gae_{{ gae.gae }}" class="d-block card-header py-3 collapsed" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="gae_{{ gae.gae }}">
+      <h6 class="m-0 font-weight-bold text-primary">GAE {{ gae.name }}: {{ gae.project }}</h6>
+    </a>
+    <div class="collapse" id="gae_{{ gae.gae }}">
+      <div class="card-body">
+
+      </div>
+    </div>
+  </div>
+{% endfor %}
+
+{% endblock %}
+
+{% block page-javascript %}
+
+<script>
+  $(document).ready(function() {
+    $("div[id^='gae_']").on('show.bs.collapse', function(e) {
+      let id = e.target.id;
+
+      found = id.match(/^gae_(\d+)$/);
+      if(found) {
+        gae = parseInt(found[1]);
+
+        // Get root to display loaded data
+        let root = $(this).children('.card-body').first();
+        // Set spinner
+        root.html('<div class="d-flex justify-content-center"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>');
+
+        // Fetch data
+        $.get( "{% url 'acc_ajax_split_summary' %}?gae="+gae, function(data) {
+          // Show content
+          root.html(data);
+        })
+        .fail(function() {
+          root.html("");
+          card = $('<div class="card border-left-danger mb-2" role="alert">').appendTo(root);
+          card = $('<div class="card-body d-flex flex-row alert-danger">').appendTo(card);
+          msg = $('<div class="p-1"><i class="fas fa-triangle-exclamation text-lg" aria-hidden="true"></i><span class="sr-only">Error:</span> Loading failed!</div>').appendTo(card);
+          $('').appendTo(msg);
+          $('').appendTo(msg);
+          $(document.createTextNode("")).appendTo(msg);
+        });
+      }
+    });
+  });
+</script>
+
+{% endblock %}

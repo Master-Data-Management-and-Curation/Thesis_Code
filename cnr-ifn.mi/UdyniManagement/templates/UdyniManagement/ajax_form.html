@@ -1,0 +1,10 @@
+{% load crispy_forms_tags %}
+{% if message %}
+  <p>{{ message }}</p>
+{% endif %}
+<form action="{{ form_action }}" method="post"{% if enctype %} enctype="{{ enctype }}"{% endif %}>
+{% csrf_token %}
+<div>
+  {{ form|crispy }}
+</div>
+</form>

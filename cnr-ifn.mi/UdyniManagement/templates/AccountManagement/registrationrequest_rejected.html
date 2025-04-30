@@ -1,0 +1,15 @@
+{% autoescape off %}
+
+Dear {{ request.name }} {{ request.surname }},
+
+your registration request has been rejected.
+
+{% if custom_message %}
+{{ custom_message }}
+{% else %}
+If you think this is an error, please contact the system administrator
+{% endif %}
+
+The UDynI Management Intranet team
+
+{% endautoescape %}

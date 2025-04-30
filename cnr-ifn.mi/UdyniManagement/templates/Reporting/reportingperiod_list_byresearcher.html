@@ -1,0 +1,188 @@
+{% extends "UdyniManagement/page.html" %}
+{% load euro %}
+{% load tr_month %}
+{% block content %}
+
+{% include "UdyniManagement/ajax_form_dialog.html" %}
+
+<a href="{% url 'reporting_list' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Back">
+  <span class="icon text-white-50">
+    <i class="fa-solid fa-circle-arrow-left"></i>
+  </span>
+  <span class="text">Back</span>
+</a>
+
+<ul class="nav nav-tabs" id="reporting_tab" role="tablist">
+  <li class="nav-item">
+    <a class="nav-link{% if by == 'project' %} active{% endif %}" id="reporting_byproject" data-toggle="tab" href="#by_project" role="tab" aria-controls="by_project" aria-selected="true">By Project</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link{% if by == 'year' %} active{% endif %}" id="reporting_byyear" data-toggle="tab" href="#by_year" role="tab" aria-controls="by_year" aria-selected="false">By Year</a>
+  </li>
+</ul>
+
+<div class="tab-content" id="myTabContent">
+  <div class="tab-pane fade{% if by == 'project' %}show active{% endif %}" id="by_project" role="tabpanel" aria-labelledby="reporting_byproject">
+    <div class="card">
+      <div class="card-body">
+
+        {# Reporting by project #}
+
+        {% for project, periods in by_project.items %}
+          <div class="card mb-4">
+            <div class="card-header">
+              <h6 class="m-0 font-weight-bold text-primary">{{ project }}</h6>
+            </div>
+            <div class="card-body">
+              {% for period in periods %}
+                <div class="d-flex flex-row border-bottom">
+                  <div class="align-self-end">From <b>{{ period.rp_start|date:"M jS, Y" }}</b> to <b>{{ period.rp_end|date:"M jS, Y" }}</b></div>
+                  <div class="align-self-end ml-4">Hours: <b>{{ period.hours|floatformat:-1 }}</b></div>
+                  <div class="align-self-end ml-4">Missions: <b>{{ period.missions }}{% if period.missions %} ({{ period.mission_hours | floatformat:-1 }} hours){% endif %}</b></div>
+                  <button class="btn btn-primary btn-sm ml-auto" type="button" data-toggle="collapse" data-target="#detail_{{ period.pk }}" aria-expanded="false" aria-controls="detail_{{ period.pk }}">
+                    <i class="fa-solid fa-caret-down text-white"></i>
+                  </button>
+                </div>
+                <div class="card collapse mb-4" id="detail_{{ period.pk }}">
+                  <div class="card-body text">
+                    <div class="d-flex justify-content-center">
+                      <div class="spinner-border" role="status">
+                        <span class="sr-only">Loading...</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane fade{% if by == 'year' %}show active{% endif %}" id="by_year" role="tabpanel" aria-labelledby="reporting_byyear">
+    <div class="card">
+      <div class="card-body">
+
+        {# Reporting by year #}
+
+        {% for year, stats in by_year.items %}
+          <div class="card mb-4">
+            <div class="card-header">
+              <div class="d-flex flex-row align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">{{ year }}</h6>
+                <div class="ml-2 text">Hours: <b>{{ stats.hours | floatformat:-1 }}</b></div>
+                <div class="ml-2 text">Missions: <b>{{ stats.missions }}{% if stats.missions %} ({{ stats.mission_hours | floatformat:-1 }}){% endif %}</b></div>
+                <div class="ml-2 text">Worked hours: <b>{{ stats.worked_hours | floatformat:-1 }}</b> (without missions)</div>
+                <button id="btn_year_{{ year }}" class="btn btn-primary btn-sm ml-auto" type="button" data-toggle="collapse" data-target="#year_{{ year }}" aria-expanded="false" aria-controls="year_{{ year }}">
+                  <i class="fa-solid fa-caret-down text-white"></i>
+                </button>
+              </div>
+            </div>
+            <div class="card-body collapse" id="year_{{ year }}">
+              <div class="d-flex justify-content-center">
+                <div class="spinner-border" role="status">
+                  <span class="sr-only">Loading...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block page-javascript %}
+
+<script>
+var loaded_periods = []
+var loaded_years = []
+
+$(document).ready(function() {
+  $("#reporting_byproject").click(function() {
+    const url = window.location.origin + window.location.pathname + "?by=project";
+    window.history.pushState('by project',"", url);
+  });
+  $("#reporting_byyear").click(function() {
+    const url = window.location.origin + window.location.pathname + "?by=year";
+    window.history.pushState('by year',"", url);
+  });
+
+  $("div[id^='detail_']").on('show.bs.collapse', function(e) {
+    let id = e.target.id;
+
+    found = id.match(/^detail_(\d+)$/);
+    if(found) {
+      pid = parseInt(found[1]);
+      if(loaded_periods.find(x => x == pid)) {
+        // Period already loaded, skip
+        return;
+      }
+
+      // Get root to display loaded data
+      let root = $(this).children('.card-body').first();
+
+      // Fetch data
+      $.get( "{% url 'reporting_ajax_period' %}?rid={{ view.kwargs.rid }}&pid="+pid, function(data) {
+          console.log(root);
+          // Show content
+          root.html(data);
+          // Store ID
+          loaded_periods.push(pid);
+        })
+        .fail(function(jqXhr, textStatus) {
+          root.html('<div role="alert" class="alert alert-danger">[Error ' + jqXhr.status + ']</div>');
+        });
+    }
+  });
+
+  function load_year(year, destination) {
+    // Fetch data
+    $.get( "{% url 'reporting_ajax_year' %}?rid={{ view.kwargs.rid }}&year="+year, function(data) {
+      // Show content
+      destination.html(data);
+      // Update link handlers
+      $("a.ajax-form").off("click").click(function(event) {
+        event.preventDefault();
+        handle_ajax_form({
+          'action': $(this).prop('href'),
+          'title': $(this).prop('title'),
+          'submit': $(this).prop('title') == 'Delete' ? 'Yes, delete!' : 'Save',
+          'success_action': reload_year_upon_save,
+        });
+      });
+    })
+    .fail(function(jqXhr, textStatus) {
+      destination.html('<div role="alert" class="alert alert-danger">[Error ' + jqXhr.status + ']</div>');
+    });
+  }
+
+  function reload_year_upon_save(data) {
+    y = data.year;
+    load_year(y, $("div[id='year_" + y + "']"));
+  }
+
+  $("div[id^='year_']").on('show.bs.collapse', function(e) {
+    let id = e.target.id;
+
+    found = id.match(/^year_(\d+)$/);
+    if(found) {
+      y = parseInt(found[1]);
+      if(loaded_years.find(x => x == y)) {
+        // Period already loaded, skip
+        return;
+      }
+      // Load data
+      load_year(y, $(this));
+      // Store year
+      loaded_years.push(y);
+    }
+  });
+});
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,84 @@
+{% load euro %}
+
+{% if perms.Accounting.splitcontab_manage %}
+<a href="{% url 'acc_split_var_add' gae=gae.pk %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Aggiungi variazione">
+  <span class="icon text-white-50">
+    <i class="fas fa-circle-plus"></i>
+  </span>
+  <span class="text">Aggiungi variazione</span>
+</a>
+{% endif %}
+
+<table cellspacing="0" cellpadding="0" class="table table-sm table-hover">
+  <tbody>
+    {% for split in accounting %}
+      <tr>
+        <td><h5 class="font-weight-bold">Responsible: {{ split.contab.responsible }}</h5></td>
+        <td colspan="5">
+          <div class="d-flex flex-row-reverse">
+            <div class="px-1">
+              <a href="{% url 'acc_split_contab_detail' pk=split.contab.pk %}" class="btn btn-primary btn-icon-split btn-sm">
+                <span class="icon text-white-50">
+                  <i class="fas fa-circle-info"></i>
+                </span>
+                <span class="text">Detail</span>
+              </a>
+            </div>
+            {% if perms.Accounting.splitcontab_manage %}
+              <div class="px-1">
+                <a href="{% url 'acc_split_contab_mod' pk=split.contab.pk %}" class="btn btn-primary btn-icon-split btn-sm">
+                  <span class="icon text-white-50">
+                    <i class="fas fa-pencil"></i>
+                  </span>
+                  <span class="text">Modify</span>
+                </a>
+              </div>
+              <div class="px-1">
+                <a href="{% url 'acc_split_contab_del' pk=split.contab.pk %}" class="btn btn-primary btn-icon-split btn-sm">
+                  <span class="icon text-white-50">
+                    <i class="fas fa-trash-can"></i>
+                  </span>
+                  <span class="text">Delete</span>
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td class="font-weight-bold">Voce</td>
+        <td class="font-weight-bold">Stanziamento</td>
+        <td class="font-weight-bold">Variazioni</td>
+        <td class="font-weight-bold">Assestato</td>
+        <td class="font-weight-bold">Impegnato</td>
+        <td class="font-weight-bold">Residuo</td>
+      </tr>
+      {% for voce, el in split.detail.accounting.items %}
+        <tr>
+          <td>{{ voce }}: {{ el.desc }}</td>
+          <td>{{ el.stanziamento | euro }}</td>
+          <td>{{ el.variazioni | euro }}</td>
+          <td>{{ el.assestato | euro }}</td>
+          <td>{{ el.impegnato | euro }}</td>
+          <td>{{ el.residuo | euro }}</td>
+        </tr>
+      {% endfor %}
+      <tr>
+        <td></td>
+        <td class="font-weight-bold">{{ split.detail.totals.stanziamento | euro }}</td>
+        <td class="font-weight-bold">{{ split.detail.totals.variazioni | euro }}</td>
+        <td class="font-weight-bold">{{ split.detail.totals.assestato | euro }}</td>
+        <td class="font-weight-bold">{{ split.detail.totals.impegnato | euro }}</td>
+        <td class="font-weight-bold">{{ split.detail.totals.residuo | euro }}</td>
+      </tr>
+    {% endfor %}
+    <tr class="bg-light text-primary">
+      <td></td>
+      <td class="font-weight-bold">{{ gt.stanziamento | euro }}</td>
+      <td class="font-weight-bold">{{ gt.variazioni | euro }}</td>
+      <td class="font-weight-bold">{{ gt.assestato | euro }}</td>
+      <td class="font-weight-bold">{{ gt.impegnato | euro }}</td>
+      <td class="font-weight-bold">{{ gt.residuo | euro }}</td>
+    </tr>
+  </tbody>
+</table>

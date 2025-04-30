@@ -1,0 +1,51 @@
+{% extends "UdyniManagement/page.html" %}
+{% load euro %}
+{% block content %}
+
+{% if perms.Reporting.costs_manage %}
+<a href="{% url 'cost_add' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Add cost">
+  <span class="icon text-white-50">
+      <i class="fas fa-circle-plus"></i>
+  </span>
+  <span class="text">Add cost</span>
+</a>
+{% endif %}
+
+{% regroup object_list by researcher as researcher_list %}
+
+{% for res in researcher_list %}
+  <div class="card shadow mb-4">
+    <div class="card-header">
+      <h6 class="m-0 font-weight-bold text-primary">{{ res.grouper }}</h6>
+    </div>
+    <div class="card-body table-responsive">
+      <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>Cost</th>
+            <th>Hourly rate</th>
+            <th>Actions</th>
+          </tr>
+        <thead>
+        <tbody>
+          {% for cost in res.list %}
+            <tr>
+              <td>{{ cost.year }}</td>
+              <td>{{ cost.cost | euro }}</td>
+              <td>{{ cost.get_hourly_rate | euro}} / h</td>
+              <td class="col-actions">
+                {% if perms.Reporting.costs_manage %}
+                  <a href="{% url 'cost_mod' pk=cost.id %}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+                  <a href="{% url 'cost_del' pk=cost.id %}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endfor %}
+
+{% endblock %}

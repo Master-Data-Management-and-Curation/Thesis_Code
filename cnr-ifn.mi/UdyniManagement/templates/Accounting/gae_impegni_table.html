@@ -1,0 +1,51 @@
+{% load generic %}
+{% load euro %}
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h6 class="m-0 font-weight-bold text-primary">Totale impegnato: <b>{{ impegnato | euro }}</b></h6>
+  </div>
+  <div class="card-body table-responsive">
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover">
+      <thead>
+        <tr>
+          <th>Esercizio originale</th>
+          <th>Impegno</th>
+          <th>Voce</th>
+          <th>Descrizione</th>
+          <th>Pagato</th>
+          <th>Da pagare</th>
+          <th>Terzo</th>
+        </tr>
+      <thead>
+      <tbody>
+        {% for tag, im in impegni.items %}
+          <tr>
+            <td>{{ im.esercizio_orig }}</td>
+            <td>{{ im.numero }}</td>
+            <td>{{ im.voce }}</td>
+            <td>{{ im.desc }}</td>
+            <td>{{ im.pagato | euro }}</td>
+            <td>{{ im.dapagare | euro }}</td>
+            <td>
+              {% if im.mandati %}
+                {% for m in im.mandati %}
+                  <small>[{{m.numero}}] {{ m.importo | euro }} ({{ m.terzo }})</small><br />
+                {% endfor %}
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><b>{{ pagato | euro }}</b></td>
+          <td><b>{{ dapagare | euro }}</b></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

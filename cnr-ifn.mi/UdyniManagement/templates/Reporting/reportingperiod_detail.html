@@ -1,0 +1,84 @@
+{% load tr_month %}
+
+<div class="d-flex flex-column">
+  {% if can_edit %}
+    <div class="d-flex flex-row">
+      <a href="{% url 'reporting_add_work' rid=researcher.pk pid=period.pk %}?origin=byresearcher&by=project&selected={{ period.pk }}" class="btn btn-primary btn-sm btn-icon-split mb-4 mr-2" aria-label="Add reported work">
+        <span class="icon text-white-50">
+          <i class="fas fa-circle-plus"></i>
+        </span>
+        <span class="text">Add reported work</span>
+      </a>
+      <a href="{% url 'reporting_add_mission' rid=researcher.pk pid=period.pk %}?origin=byresearcher&by=project&selected={{ period.pk }}" class="btn btn-primary btn-sm btn-icon-split mb-4" aria-label="Add reported mission">
+        <span class="icon text-white-50">
+          <i class="fas fa-circle-plus"></i>
+        </span>
+        <span class="text">Add reported mission</span>
+      </a>
+    </div>
+  {% endif %}
+  {% if details.work %}
+    <div class="table-responsive">
+      <table class="table table-hover table-sm">
+        <thead>
+          <th>Year</th>
+          <th>Month</th>
+          <th>Hours</th>
+          <th>Workpackages</th>
+          <th>Actions</th>
+        </thead>
+        <tbody>
+          {% for line in details.work %}
+            <tr>
+              {% for cell in line %}
+                <td>
+                  {% if cell.pk %}
+                    {% if can_edit %}
+                      <a href="{% url 'reporting_mod_work' rid=researcher.pk wid=cell.pk %}?origin=byresearcher&by=project&selected={{ period.pk }}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+                      <a href="{% url 'reporting_del_work' rid=researcher.pk wid=cell.pk %}?origin=byresearcher&by=project&selected={{ period.pk }}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+                    {% endif %}
+                  {% elif cell.wps %}
+                    {% for wp in cell.wps %}
+                      {{ wp.wp }}: {{ wp.hours }} ({{ wp.percent | floatformat:-1 }}&percnt;)<br />
+                    {% endfor %}
+                  {% else %}
+                    {{ cell.val }}
+                  {% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+      </table>
+    </div>
+  {% endif %}
+  {% if details.missions %}
+  <div class="table-responsive">
+    <table class="table table-hover table-sm">
+      <thead>
+        <th>Day</th>
+        <th>Workpackage</th>
+        <th>Actions</th>
+      </thead>
+      <tbody>
+        {% for line in details.missions %}
+          <tr>
+            {% for cell in line %}
+              <td>
+                {% if cell.pk %}
+                  {% if can_edit %}
+                    <a href="{% url 'reporting_mod_mission' rid=researcher.pk mid=cell.pk %}?origin=byresearcher&by=project&selected={{ period.pk }}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+                    <a href="{% url 'reporting_del_mission' rid=researcher.pk mid=cell.pk %}?origin=byresearcher&by=project&selected={{ period.pk }}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+                  {% endif %}
+                {% elif cell.wp %}
+                  {{ cell.wp }}
+                {% elif cell.date %}
+                  {{ cell.date|date:"M jS, Y" }}
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+</div>

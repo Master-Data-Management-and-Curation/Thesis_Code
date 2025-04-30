@@ -1,0 +1,90 @@
+{% extends "UdyniManagement/page.html" %}
+{% block content %}
+
+<!-- Button for going back to the previous page -->
+<a href="{% url 'lab_and_experimentalstation_view' %}"  class="btn btn-primary btn-icon-split mb-4" aria-label="Labs & Exp Stations">
+  <span class="icon text-white-50">
+    <i class="fas fa-arrow-left"></i>
+  </span>
+  <span class="text">Labs & Exp Stations</span>
+</a>
+
+<div>
+{% if can_edit %}
+<a href="{% url 'experiment_add' station_id=this_station_id %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Add experiment for this experimental station">
+  <span class="icon text-white-50">
+      <i class="fas fa-circle-plus"></i>
+  </span>
+  <span class="text">Add experiment for this experimental station</span>
+</a>
+{% endif %}
+</div>
+
+{% for experiment in object_list %}
+  <div class="card mb-4">
+    <div class="card-header">
+      <h6 class="m-0 font-weight-bold text-primary">Experiment ID: {{ experiment.experiment_id }}</h6>
+    </div>
+    <div class="card-body table-responsive">
+      <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+        <thead>
+          <tr>
+            <th>Creation time</th>
+            <th>Project</th>
+            <th>Reference</th>
+            <th>Description</th>
+            <th>Samples</th>
+            <th>Responsible</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        
+          <tr>
+            <td>{{ experiment.creation_time }}</td>
+            <td>{{ experiment.project }}</td>
+            <td>{{ experiment.reference }}</td>
+            <td>{{ experiment.description }}</td>            
+            <td>
+              {% for sfe in experiment.samples %}
+                <div>
+                  {{ sfe.sample.name }}
+                  {% if can_edit %}
+                    <a href="{% url 'experiment_sample_del' station_id=this_station_id experiment_id=experiment.experiment_id pk=sfe.pk %}" aria-label="Delete"><i class="fas fa-times-circle" aria-hidden="true"></i></a>
+                  {% endif %}
+                </div>
+              {% empty %}
+                <em>No samples</em>
+              {% endfor %}
+            </td>
+
+            <td>{{ experiment.responsible }}</td>
+            <td>{{ experiment.status }}</td>
+
+            <td class="col-actions">
+              {% if can_edit %}
+                <a href="{% url 'experiment_mod' station_id=this_station_id pk=experiment.experiment_id %}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+                <a href="{% url 'experiment_del' station_id=this_station_id pk=experiment.experiment_id %}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+                <a href="{% url 'experiment_sample_add' station_id=this_station_id experiment_id=experiment.experiment_id %}" aria-label="Add existing sample"><i class="fas fa-circle-plus" aria-hidden="true"></i></a>
+              {% endif %}
+              <!-- In the future only participants to the experiment will see this button -->
+              {% if True %}
+                <a href="{% url 'logbook_view' station_id=this_station_id experiment_id=experiment.experiment_id %}"  class="btn btn-sm btn-primary btn-icon-split" aria-label="Show Logbook">
+                  <span class="icon text-white-50">
+                    <i class="fas fa-arrow-right"></i>
+                  </span>
+                  <span class="text">Show Logbook</span>
+                </a>
+              {% endif %}
+            </td>
+          </tr>
+        
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endfor %}
+
+
+{% endblock %}
