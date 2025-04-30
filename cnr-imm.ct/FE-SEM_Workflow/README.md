@@ -7,6 +7,8 @@ This repository describe the pipeline to extract, transform and combine data fro
 - `extract_metadata.py`: Extracts and structures metadata from SEM TIFF image files.
 - `generate_nexus.ipynb`: (Notebook) Final processing for Nexus file generation (details inside notebook).
 
+The output and input files in this directories contains mock\test data, just for the purpose of showing how the workflow performs.
+
 ## Directory Structure
 
 ```
@@ -134,7 +136,7 @@ python extract_metadata.py
 
 Install required packages:
 ```bash
-pip install pandas tifffile numpy
+pip install pandas tifffile numpy h5py 
 ```
 
 ---
