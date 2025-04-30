@@ -1,0 +1,66 @@
+{
+    "General properties": {
+        "Sample ID": {
+            "Sample name": "test_sample",
+            "Creation date": "2025-04-30",
+            "Parent sample": "sample_parent"
+        },
+        "Sample composition/structure": {
+            "Substrate": "Ni111",
+            "Layer 1": "graphene"
+        }
+    },
+    "Cleaning": {
+        "Sputtering": {
+            "Pressure": "1e-6 mbar",
+            "Energy": "1.5 keV",
+            "Ion current": "11 uA",
+            "Duration": "10 min"
+        },
+        "Annealing": {
+            "Mode": "auto",
+            "Temperature": "700 °C",
+            "Heating rate": "2 °C/s",
+            "Cooling rate": "2 °C/s",
+            "Max pressure": "2e-9 mbar",
+            "Duration": "15 min"
+        },
+        "Sputtering 2": {
+            "Pressure": "1e-6 mbar",
+            "Energy": "1.5 keV",
+            "Ion current": "11 uA",
+            "Duration": "10 min"
+        },
+        "Annealing 2": {
+            "Mode": "auto",
+            "Temperature": "700 °C",
+            "Heating rate": "2 °C/s",
+            "Cooling rate": "2 °C/s",
+            "Max pressure": "2e-9 mbar",
+            "Duration": "15 min"
+        }
+    },
+    "Graphene growth": {
+        "Initial step": {
+            "Dosed gas": "C2H4",
+            "Pressure": "5e-7 mbar",
+            "Exp. duration": "1 h",
+            "Sample temperature": "580 °C",
+            "Start time": "12:00"
+        },
+        "Final step": {
+            "No exp. duration": "10 min",
+            "No exp. sample temperature": "580 °C",
+            "Cooling rate": "2 °C/s"
+        }
+    },
+    "Gas exposure": {
+        "Initial step": {
+            "Dosed gas": "CO2",
+            "Pressure": "5e-7 mbar",
+            "Exp. duration": "15 min",
+            "Sample temperature": "25 °C",
+            "Start time": "14:00"
+        }
+    }
+}
