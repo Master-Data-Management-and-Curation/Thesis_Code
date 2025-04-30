@@ -19,6 +19,7 @@ This repository describe the pipeline to extract, transform and combine data fro
     samples.json
     original_samples.json
     Test.json
+    Test.nxs
     JSON_metadata/
       *.json
 /scripts/
