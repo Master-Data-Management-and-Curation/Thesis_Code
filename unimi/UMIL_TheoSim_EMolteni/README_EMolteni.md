@@ -5,13 +5,17 @@ on adding functionalities to some NOMAD parsers for electronic structure codes.
 The NOMAD parsers named parser.py mentioned below, part of NOMAD electronic-parsers, 
 can only run within the NOMAD platform (https://nomad-lab.eu/nomad-lab/) or on a local NOMAD Oasis (https://nomad-lab.eu/nomad-lab/nomad-oasis.html), in both of which also the .../electronic-parsers/tree/develop/tests folder is present.
 Our modified versions only run within a local Oasis (until they will be merged, after successful Pull Requests, into the NOMAD platform).
+
 These parsers can be run, on the corresponding Yambo or Siesta files, either:
+
 a) by making an upload of Yambo or Siesta data such ad the ones contained in this repo,
 to the standard NOMAD or to an Oasis opened on a web browser 
+
 b) without the use of the GUI, locally, by command line, on a computer where an Oasis is installed, by:
 uv run nomad parse <path>/mainfile  --> this is mainly useful for debugging aims: data
 are not visualized, but one can inspect the output of the parsing process in test format
 (to check which quantities are parsed) and possible error messages.
+
 Notice that in both cases the file to be parsed (in (a) this is done automatically by NOMAD,
 in (b) it must be specified in the command) is the "mainfile" (which is a r* file for Yambo, a *.out file for Siesta), also in those cases where the data we are interested in are in a different file
 (a o* file for Yambo spectra, the ns.db file for Yambo coordinates, the dos file for Siesta DOS).
@@ -44,7 +48,8 @@ modified NOMAD Yambo parser where I have fixed an issue about a mismatch between
 total number of coordinates and total number of atoms, due to NOMAD incorrectly using the Yambo 
 max_n_atoms variable (maximum of the numbers of atoms of all the chemical species present in the system)
 instead of the n_atoms one (actual number of atoms of a given chemical species) for allocating
-the number of lines for the atom coordinates of each chemical species
+the number of lines for the atom coordinates of each chemical species.
+
 The corresponding standard NOMAD parser, yielding n. atoms / n. coordinates mismatch errors
 for systems with different number of atoms of different chemical species,
  is:  https://github.com/nomad-coe/electronic-parsers/tree/develop/electronicparsers/yambo/parser.py
@@ -52,12 +57,14 @@ for systems with different number of atoms of different chemical species,
 * /CH4_db_minimal (from https://github.com/emolteni/electronic-parsers/tree/develop/tests/data/yambo): 
 our "minimal" test folder (containing also a ns.db file within a /SAVE subfolder) for the NOMAD electronic-parsers/test/data/yambo folder, 
 for the above-mentioned implementation regarding atom coordinates; r_setup is the yambo mainfile.
+
 The corresponding general NOMAD test folder for Yambo (without our contribution) is:
 https://github.com/nomad-coe/electronic-parsers/tree/develop/tests/data/yambo
 
 * test_yamboparser.py (from https://github.com/emolteni/electronic-parsers/tree/develop/tests):
 file for running all the NOMAD yambo tests present in https://github.com/emolteni/electronic-parsers/tree/develop/tests/data/yambo,
 where I have added the part (test_5) regarding our test folder /CH4_db_minimal.
+
 The corresponding standard NOMAD version (without our contribution) is: https://github.com/nomad-coe/electronic-parsers/tree/develop/tests/test_yamboparser.py
 
 
@@ -73,6 +80,7 @@ where I have indicated with (.....)  those columns which are not always present.
 
 The columns to be plotted are the first (column 0 according to python, excitation energies) 
 and the second (column 1 according to python,  intensities).
+
 This version works on jupyterlab;  our version of the NOMAD Yambo parser containing this part for specctra (adapted for the NOMAD platform) does not work yet in our Oasis 
 (no warning, no error messages, yet no spectra plotted), possibly due to issues on which subparser to use
 in order to parse the correct file, which is a o* file, not a r* mainfile.
@@ -89,6 +97,7 @@ This implementation already works on our Oasis; we have not made a Pull Request 
 since we are planning to implement the plotting of Siesta band structures too.
 
 * parser.py:  modified NOMAD Siesta parser, implementing the parsing of DOS outputs.
+  
 The corresponding standard NOMAD parser is: https://github.com/nomad-coe/electronic-parsers/tree/develop/electronicparsers/siesta/parser.py
 
 * /Siesta_DOS_bands_data: test folder with a Siesta DOS + band structure run:
