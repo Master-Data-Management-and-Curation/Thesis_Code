@@ -12,12 +12,14 @@ a) by making an upload of Yambo or Siesta data such ad the ones contained in thi
 to the standard NOMAD or to an Oasis opened on a web browser 
 
 b) without the use of the GUI, locally, by command line, on a computer where an Oasis is installed, by:
-uv run nomad parse <path>/mainfile  --> this is mainly useful for debugging aims: data
+uv run nomad parse path/mainfile  --> this is mainly useful for debugging aims: data
 are not visualized, but one can inspect the output of the parsing process in test format
 (to check which quantities are parsed) and possible error messages.
+("path" is the complete path of the mainfile, and "mainfile" is its name)
 
 Notice that in both cases the file to be parsed (in (a) this is done automatically by NOMAD,
-in (b) it must be specified in the command) is the "mainfile" (which is a r* file for Yambo, a *.out file for Siesta), also in those cases where the data we are interested in are in a different file
+in (b) it must be specified in the command) is the "mainfile" (which is a r* file for Yambo, a *.out file for Siesta), 
+also in those cases where the data we are interested in are in a different file
 (a o* file for Yambo spectra, the ns.db file for Yambo coordinates, the dos file for Siesta DOS).
 
 Our Spectra_plotting_EMvers_forgithubrepo.ipynb in the /Yambo_spectra folder 
