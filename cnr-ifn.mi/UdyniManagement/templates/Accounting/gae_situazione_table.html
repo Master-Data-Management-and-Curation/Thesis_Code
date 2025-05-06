@@ -1,0 +1,112 @@
+{% load generic %}
+{% load euro %}
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h6 class="m-0 font-weight-bold text-primary"><b>Summary</b></h6>
+  </div>
+  <div class="card-body table-responsive">
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Stanziamento</th>
+          <th>Variazione +</th>
+          <th>Variazione -</th>
+          <th>Assestato</th>
+          <th>Impegnato</th>
+          <th>Pagato</th>
+          <th>Residuo</th>
+        </tr>
+      <thead>
+      <tbody>
+        <tr>
+          <td></td>
+          <td>{{ totals.stanziamento | euro }}</td>
+          <td>{{ totals.var_piu | euro }}</td>
+          <td>{{ totals.var_meno | euro }}</td>
+          <td>{{ totals.assestato | euro }}</td>
+          <td>{{ totals.impegnato | euro }}</td>
+          <td>{{ totals.pagato | euro }}</td>
+          <td>{{ totals.residuo | euro }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+{% for voce, esercizi in situazione.items %}
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h6 class="m-0 font-weight-bold text-primary"><b>{{ voce }}:</b> {{ voci|dictkey:voce }}</h6>
+  </div>
+  <div class="card-body table-responsive">
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover">
+      <thead>
+        <tr>
+          <th>Esercizio</th>
+          <th>Stanziamento</th>
+          <th>Variazione +</th>
+          <th>Variazione -</th>
+          <th>Assestato</th>
+          <th>Impegnato</th>
+          <th>Pagato</th>
+          <th>Residuo</th>
+        </tr>
+      <thead>
+      <tbody>
+        {% for year, fondi in esercizi.items %}
+          <tr>
+            <td>{{ year }}</td>
+            <td>{{ fondi.stanziamento | euro }}</td>
+            <td>{{ fondi.var_piu | euro }}</td>
+            <td>{{ fondi.var_meno | euro }}</td>
+            <td>{{ fondi.assestato | euro }}</td>
+            <td>{{ fondi.impegnato | euro }}</td>
+            <td>{{ fondi.pagato | euro }}</td>
+            <td>{{ fondi.residuo | euro }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="card mb-2">
+      <a href="#variazioni_{{ voce }}" class="d-block card-header py-3 collapsed" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="variazioni_{{ voce }}">
+        <h6 class="m-0 font-weight-bold text-secondary">Variazioni</h6>
+      </a>
+      <div class="collapse" id="variazioni_{{ voce }}" style="">
+        <div class="card-body">
+          <table cellspacing="0" cellpadding="0" class="table table-sm table-hover">
+            <thead>
+              <tr>
+                <th>Numero</th>
+                <th>Esercizio</th>
+                <th>Data</th>
+                <th>Importo</th>
+                <th>Descrizione</th>
+              </tr>
+            <thead>
+            <tbody>
+              {% for year, fondi in esercizi.items %}
+                {% for variazione in fondi.variazioni %}
+                  <tr>
+                    <td>{{ variazione.numero }}</td>
+                    <td>{{ year }}</td>
+                    <td>{{ variazione.data }}</td>
+                    <td>{{ variazione.importo | euro }}</td>
+                    <td>{{ variazione.descrizione }}</td>
+                  </tr>
+                {% endfor %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endfor %}

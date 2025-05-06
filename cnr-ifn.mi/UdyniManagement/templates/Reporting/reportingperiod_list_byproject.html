@@ -1,0 +1,75 @@
+{% extends "UdyniManagement/page.html" %}
+{% load euro %}
+{% block content %}
+
+<div class="card shadow mb-4">
+  <div class="card-header">
+    <h6 class="m-0 font-weight-bold text-success">Detail by researcher</h6>
+  </div>
+  <div class="card-body">
+    {% for r in researchers %}
+      <div class="text"><a href="{% url 'reporting_byresearcher' rid=r.pk %}">{{ r }}</a></div>
+    {% endfor %}
+    <div class="dropdown mt-3">
+      <button class="btn btn-primary dropdown-toggle" type="button" id="other_researchers" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Report for a new researcher
+      </button>
+      <div class="dropdown-menu" aria-labelledby="other_researchers">
+        {% for r in other_researchers %}
+        <a class="dropdown-item" href="{% url 'reporting_byresearcher' rid=r.pk %}">{{ r }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% for project, report in projects.items %}
+  <div class="card shadow mb-4">
+    <div class="card-header">
+      <div class="d-flex flex-row">
+        <h6 class="m-0 font-weight-bold text-primary">{{ project }}</h6>
+      </div>
+    </div>
+    <div class="card-body table-responsive">
+      <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+        <thead>
+          <tr>
+            <th>Period start</th>
+            <th>Period end</th>
+            <th>Researcher</th>
+            <th>Hours</th>
+            <th>Missions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for period in report.periods %}
+            <tr>
+              <td>{{ period.rp.rp_start }}</td>
+              <td>{{ period.rp.rp_end }}</td>
+              <td>
+                {% for name, r in period.researchers.items %}
+                  {% if r.rid %}
+                    <a href="{% url 'reporting_byresearcher' rid=r.rid %}">{{ name }}</a><br />
+                  {% endif %}
+                {% endfor %}
+              </td>
+              <td>
+                {% for name, r in period.researchers.items %}
+                  {{ r.hours | floatformat:-1 }}{% if r.mission_hours %} ({{ r.mission_hours | floatformat:-1 }}){% endif %}<br />
+                {% endfor %}
+              </td>
+              <td>
+                {% for name, r in period.researchers.items %}
+                  {{ r.missions }}<br />
+                {% endfor %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endfor %}
+
+{% endblock %}

@@ -1,0 +1,127 @@
+{% load tr_month %}
+
+<div class="d-flex flex-column">
+  {% if details.work %}
+    <div class="table-responsive">
+      <table class="table table-hover table-sm table-reporting">
+        <thead>
+          <th>Month</th>
+          {% for period in periods %}
+            <th class="">
+              {{ period.project.name }}
+              <br /><small>From: {{ period.rp_start|date:"M jS, Y" }}</small>
+              <br /><small>To: {{ period.rp_end|date:"M jS, Y" }}</small>
+            </th>
+          {% endfor %}
+          <th>Reported hours</th>
+          <th>Usable hours</th>
+          <th>Half days</th>
+          <th>Worked hours</th>
+        </thead>
+        <tbody>
+          {% for line in details.work %}
+            <tr>
+              {% for cell in line %}
+                <td>
+                  {% if cell.value %}
+                    {{ cell.value }}
+                  {% else %}
+                    <div class="d-flex flex-column">
+                      <div class="d-flex flex-row">
+                        <div class="text">{{ cell.hours | floatformat:-1 }}</div>
+                        {% if cell.pk %}
+                          <div class="ml-auto mr-4">
+                            {% if cell.wps %}
+                              <a title="View workpackages" data-toggle="collapse" href="#wps_{{ cell.pk }}" aria-label="Workpackages" role="button" aria-expanded="false" aria-controls="wps_{{ cell.pk }}"><i class="fas fa-circle-arrow-down" aria-hidden="true"></i></a>
+                            {% endif %}
+                            {% if cell.can_edit %}
+                              <a class="ajax-form" title="Modify" href="{% url 'reporting_mod_work' rid=researcher.pk wid=cell.pk %}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+                              <a class="ajax-form" title="Delete" href="{% url 'reporting_del_work' rid=researcher.pk wid=cell.pk %}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+                            {% endif %}
+                          </div>
+                        {% elif cell.ppk %}
+                          <div class="ml-auto mr-4">
+                            {% if cell.can_edit %}
+                              <a class="ajax-form" title="Add hours" href="{% url 'reporting_add_work' rid=researcher.pk pid=cell.ppk %}?year={{ year }}&month={{ cell.month }}" aria-label="Add hours"><i class="fas fa-circle-plus" aria-hidden="true"></i></a>
+                            {% endif %}
+                          </div>
+                        {% endif %}
+                      </div> {# flex-row #}
+                      {% if cell.pk and cell.wps %}
+                        <div class="collapse" id="wps_{{ cell.pk }}">
+                          <div class="d-flex flex-column">
+                            {% for wp in cell.wps %}
+                              <div class="text"><small>{{ wp.wp }}: {{ wp.percent|floatformat:-1}}&percnt;</small></div>
+                            {% endfor %}
+                          </div>
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+          <tr>
+            {% for t in totals %}
+              <td><b>{{ t }}</b></td>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  {% if details.missions %}
+    <div class="table-responsive">
+      <table class="table table-hover table-sm table-reporting">
+        <thead>
+          <th>Month</th>
+          {% for period in periods %}
+            <th class="">
+              {{ period.project.name }}{% if period.can_edit %}<a class="ajax-form pl-2" title="Add mission" href="{% url 'reporting_add_mission' rid=researcher.pk pid=period.pk %}?year={{ year }}" aria-label="Modify"><i class="fas fa-circle-plus" aria-hidden="true"></i></a>{% endif %}
+              <br /><small>From: {{ period.rp_start|date:"M jS, Y" }}</small>
+              <br /><small>To: {{ period.rp_end|date:"M jS, Y" }}</small>
+            </th>
+          {% endfor %}
+          <th>Reported missions</th>
+          <th>Total missions</th>
+        </thead>
+        <tbody>
+          {% for line in details.missions %}
+            <tr>
+              {% for cell in line %}
+                <td>
+                  {% if cell.value %}
+                    {{ cell.value }}
+                  {% else %}
+                    <div class="d-flex flex-column">
+                      {% for mission in cell.missions %}
+                        <div class="d-flex flex-row">
+                          <div class="text"><small>{{ mission.day | date:"M jS" }}</small></div>
+                          <div class="ml-auto mr-4">
+                            {% if mission.can_edit %}
+                              {% if mission.wp %}
+                                <a class="ajax-form" title="Modify" href="{% url 'reporting_mod_mission' rid=researcher.pk mid=mission.pk %}?year={{ year }}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+                              {% endif %}
+                              <a class="ajax-form" title="Delete" href="{% url 'reporting_del_mission' rid=researcher.pk mid=mission.pk %}?year={{ year }}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+                            {% endif %}
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+          <tr>
+            {% for t in total_missions %}
+              <td><b>{{ t }}</b></td>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</div>

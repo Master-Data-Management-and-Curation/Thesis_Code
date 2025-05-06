@@ -1,0 +1,60 @@
+{% extends "UdyniManagement/page.html" %}
+{% load generic %}
+{% load euro %}
+{% block content %}
+
+<div class="card mb-4">
+  <div class="card-body table-responsive">
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover">
+      <thead>
+        <tr>
+          <th>Voce</th>
+          {% for prj in all_projects %}
+            <th>{{ prj }}</th>
+          {% endfor %}
+          <th>Total</th>
+        </tr>
+      <thead>
+      <tbody>
+        {% for voce, residui in funding.items %}
+          <tr>
+            <td><span data-toggle="tooltip" title="{{ voce_desc|dictkey:voce }}" class="text-primary"><b>{{ voce }}</b></td>
+            {% for prj in all_projects %}
+              {% if residui %}
+                {% with residuo=residui|dictkey:prj %}
+                  <td>{% if residuo %}{{ residuo | euro }}{% else %}0,00 €{% endif %}</td>
+                {% endwith %}
+              {% endif %}
+            {% endfor %}
+            <td>
+              {% with total=totals_by_voce|dictkey:voce %}
+                {% if total %}<b>{{ total | euro }}</b>{% endif %}
+              {% endwith %}
+            </td>
+          </tr>
+        {% endfor %}
+        <tr>
+          <td></td>
+          {% for prj in all_projects %}
+            <td>
+              {% with total=totals_by_project|dictkey:prj %}
+                <b>{% if total %}{{ total | euro }}{% endif %}</b>
+              {% endwith %}
+            </td>
+          {% endfor %}
+          <td><span class="text-success"><b>{{ grand_total | euro }}</b></span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block page-javascript %}
+<script>
+  $(document).ready(function() {
+    $('[data-toggle="tooltip"]').tooltip()
+  });
+</script>
+{% endblock %}

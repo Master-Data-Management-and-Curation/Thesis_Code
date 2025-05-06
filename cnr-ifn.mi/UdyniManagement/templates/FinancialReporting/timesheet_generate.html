@@ -1,0 +1,539 @@
+{% extends "UdyniManagement/page.html" %}
+{% load tr_month %}
+
+{% block content %}
+
+<div class="d-flex flex-row mb-4">
+  <a href="{% url 'timesheets_view' %}" class="btn btn-primary btn-icon-split mr-2" aria-label="Back">
+    <span class="icon text-white-50">
+        <i class="fas fa-circle-arrow-left"></i>
+    </span>
+    <span class="text">Back</span>
+  </a>
+  <div class="dropdown">
+    <button class="btn btn-primary dropdown-toggle mr-2" type="button" id="month-selector" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+      <span id="current-month">{{ months.0 | month_num2en }}</span>
+      <span class="caret"></span>
+    </button>
+    <div class="dropdown-menu" aria-labelledby="month-selector">
+      {% for m in months %}
+      <a class="dropdown-item" id="m_{{ m }}">{{ m | month_num2en }}</a>
+      {% endfor %}
+    </div>
+  </div>
+  <button class="btn btn-primary btn-circle mr-2" type="button" id="prev-month" aria-label="Previous" disabled>
+    <i class="fas fa-circle-arrow-left"></i>
+  </button>
+  <button class="btn btn-primary btn-circle mr-2" type="button" id="next-month" data-label="Next">
+    <i class="fas fa-circle-arrow-right"></i>
+  </button>
+  <button id="ts_save_top" type="button" class="btn btn-primary btn-icon-split ml-auto" aria-label="Save">
+    <span class="icon text-white-50">
+      <i class="fas fa-floppy-disk"></i>
+    </span>
+    <span class="text">Save</span>
+  </button>
+</div>
+
+<div id="edit-dialog" title="Edit">
+  <input type="hidden" value="" id="edit-id" />
+  <input class="form-control" type="number" min="0" max="0" step="0.1" id="edit-value" value="0.0" />
+</div>
+
+<div id="saving_dialog" title="Save in progress">
+    <p>Please wait ...</p>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body table-responsive" id="timesheet"></div>
+</div>
+<div class="card mb-4">
+  <div class="card-body d-flex flex-row">
+    <div role="alert" id="ts_savemessage"></div>
+    <div class="ml-auto">
+      <button id="ts_save_bottom" type="button" class="btn btn-primary btn-icon-split" aria-label="Save">
+        <span class="icon text-white-50">
+          <i class="fas fa-floppy-disk"></i>
+        </span>
+        <span class="text">Save</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block page-javascript %}
+
+<script type="text/javascript">
+  // Months names
+  const months = [{% for m in months %}"{{ m | month_num2en }}", {% endfor %}];
+
+  function format_timesheet(data) {
+    // Root
+    root = $("#timesheet")
+    // Clear timesheet
+    root.html("");
+
+    if(!data.generated) {
+      // Error message
+      if(data.error == 'no-hint') {
+        card = $('<div class="card border-left-warning mb-2" role="warning">').appendTo(root);
+        card = $('<div class="card-body d-flex flex-row">').appendTo(card);
+        msg = $('<div class="p-1">').appendTo(card);
+        $('<i class="fas fa-triangle-exclamation text-lg" aria-hidden="true"></i>').appendTo(msg);
+        $('<span class="sr-only">Warning:</span>').appendTo(msg);
+        $(document.createTextNode(" "+data.message+" ")).appendTo(msg);
+        $('<a href="{% url 'timesheets_generatehints' rid year %}" aria-label="Generate hints" class="btn btn-primary btn-icon-split ml-auto"><span class="icon text-white-50"><i class="fas fa-lightbulb"></i></span><span class="text">Generate hints for {{ year }}</span></a>').appendTo(card);
+
+      } else {
+        card = $('<div class="card border-left-danger mb-2" role="alert">').appendTo(root);
+        card = $('<div class="card-body d-flex flex-row">').appendTo(card);
+        msg = $('<div class="p-1">').appendTo(card);
+        $('<i class="fas fa-triangle-exclamation text-lg" aria-hidden="true"></i>').appendTo(msg);
+        $('<span class="sr-only">Error:</span>').appendTo(msg);
+        $(document.createTextNode(" " + data.error)).appendTo(msg);
+      }
+      return;
+    }
+
+    // Timesheet data
+    var ts = data.ts;
+
+    // Check if it has been modified
+    msg = $('#ts_savemessage')
+    msg.html("")
+    msg.removeClass();
+    if(ts.modified == 0) {
+      msg.addClass("alert").addClass("alert-success");
+      $('<i class="fas fa-circle-check" aria-hidden="true"></i>').appendTo(msg);
+      $(document.createTextNode(" Timesheet has not been modified since last save")).appendTo(msg);
+    } else if(ts.modified == 1) {
+      msg.addClass("alert").addClass("alert-warning");
+      $('<i class="fas fa-triangle-exclamation" aria-hidden="true"></i>').appendTo(msg);
+      $(document.createTextNode(" Timesheet has been modified since last save")).appendTo(msg);
+    }
+
+    // Create table
+    table = $('<table class="timesheet" cellspacing="0" cellpadding="0"></table>').appendTo(root);
+
+    // Add header
+    thead = $('<thead></thead>').appendTo(table);
+    days_line = $('<tr class="days"></tr>').appendTo(thead);
+    $('<th class="header">Day</th>').appendTo(days_line);
+    for(const i in ts.days) {
+      d = $('<th class="day">' + ts.days[i].n + '</th>').appendTo(days_line);
+      if(ts.days[i].holiday)
+        d.addClass("holiday");
+    }
+    $('<th class="day total">&Sigma;</th>').appendTo(days_line);
+    $('<th class="day hours">&epsilon;</th>').appendTo(days_line);
+
+    // Cycle through projects
+    tbody = $('<tbody></tbody>').appendTo(table);
+    for(const i in ts.projects) {
+      p = ts.projects[i];
+
+      line = $('<tr class="project"></tr>').appendTo(tbody);
+      if(p.has_wps)
+        line.addClass("has_wps");
+
+      // Project name
+      $('<td class="header">' + p.name + ': ' + p.ref + '</td>').appendTo(line);
+      for(const k in p.days) {
+        d = $('<td class="hours"></td>').appendTo(line);
+        if(p.days[k].holiday)
+          d.addClass("holiday");
+        if(p.has_wps) {
+          $('<span id="ps_' + i + '_' + k + '">' + p.days[k].h + '</span>').appendTo(d);
+        } else {
+          s = $('<span id="rp_' + p.id + '_' + k + '_' + i + '">' + p.days[k].h + '</span>').appendTo(d)
+          if(p.days[k].mission)
+            s.addClass("missionday");
+          else
+            s.addClass("editable-cell");
+        }
+      }
+      if(p.has_wps) {
+        $('<td class="hours total"><span id="pstot_' + i + '">' + p.total + '</span></td>').appendTo(line);
+        $('<td class="hours"><span id="pserr_' + i + '">0.0</span></td>').appendTo(line);
+      } else {
+        $('<td class="hours total"><span id="tot_' + p.id + '">' + p.total + '</span></td>').appendTo(line);
+        if(p.id != -1) {
+          $('<td class="hours"><span id="err_' + p.id + '">0.0</span></td>').appendTo(line);
+        } else {
+          $('<td class="hours"></td>').appendTo(line);
+        }
+      }
+
+      if(p.has_wps) {
+        for(const j in p.wps) {
+          line = $('<tr class="wp"></tr>').appendTo(tbody);
+          if(p.wps[j].last)
+            line.addClass("last_wp");
+          $('<td class="header">' + p.wps[j].name + ': ' + p.wps[j].desc + '</td>').appendTo(line);
+          for(const k in p.wps[j].days) {
+            d = $('<td class="hours"></td>').appendTo(line);
+            if(p.days[k].holiday)
+              d.addClass("holiday");
+            s = $('<span id="rp_' + p.wps[j].id + '_' + k + '_' + i + '">' + p.wps[j].days[k].h + '</span>').appendTo(d);
+            if(p.wps[j].days[k].mission)
+              s.addClass("missionday");
+            else
+              s.addClass("editable-cell");
+          }
+          $('<td class="hours total"><span id="tot_' + p.wps[j].id + '">' + p.wps[j].total + '</span></td>').appendTo(line);
+          $('<td class="hours"><span id="err_' + p.wps[j].id + '">0.0</span></td>').appendTo(line);
+        }
+      }
+    }
+
+    line = $('<tr class="absences"></tr>').appendTo(tbody);
+    $('<td class="header">Absences</td>').appendTo(line);
+    for(const i in ts.absence_code) {
+      d = $('<td class="value">' + ts.absence_code[i].a + '</td>').appendTo(line);
+      if(ts.absence_code[i].holiday)
+        d.addClass("holiday");
+    }
+    $('<td class="total"></td>').appendTo(line);
+    $('<td class="hours"></td>').appendTo(line);
+
+    line = $('<tr class="total"></tr>').appendTo(tbody);
+    $('<td class="header">Total</td>').appendTo(line);
+    for(const i in ts.day_total) {
+      d = $('<td class="hours"></td>').appendTo(line);
+      if(ts.day_total[i].holiday)
+        d.addClass("holiday");
+      $('<span id="dtot_' + i + '">' + ts.day_total[i].h + '</span>').appendTo(d);
+    }
+    $('<td class="total hours">' + ts.grand_total + '</td>').appendTo(line);
+    $('<td class="hours"></td>').appendTo(line);
+
+    // Add double click handlers
+    // Enable double click action to edit values
+    $(".editable-cell").dblclick(function() {
+      id = $(this).attr('id');
+      // Extract period ID and month ID
+      m = id.match(/^rp_(\d+)_(\d+)_(\d+)$/);
+      if(m == null)
+        return;
+      rp = parseInt(m[1]);
+      day = parseInt(m[2]);
+      p = parseInt(m[3]);
+      // Ignore internal time
+      if(rp == -1)
+        return;
+      // Set value
+      $("#edit-value").val($(this).text());
+      // Set maximum number of hours
+      max = parseFloat($("#dtot_" + day).text());
+      $("#edit-value").attr('max', max);
+      // Set current ID
+      $("#edit-id").val(id);
+      // Open dialog
+      $("#edit-dialog").dialog("open");
+    });
+  }
+
+  // Update the modified cell and all the sums over columns and lines
+  // (an also project line if the modification was on a WP)
+  function updateTimesheetTable(id, val) {
+    // Parse ID
+    m = id.match(/^rp_(\d+)_(\d+)_(\d+)$/);
+    if(m == null)
+      return;
+    rp = parseInt(m[1]);
+    day = parseInt(m[2]);
+    p = parseInt(m[3]);
+
+    // Update cell value
+    $('#'+id).text(val.toFixed(1));
+
+    // Update line sum
+    linetot = parseFloat($('#tot_'+rp).text());
+    linesum = 0;
+    $("span[id^='rp_"+rp+"_']").each(function() {
+      linesum += parseFloat($(this).text());
+    });
+
+    if(linetot != linesum) {
+      $('#err_'+rp).text((linesum - linetot).toFixed(1)).addClass('sum-mismatch');
+    } else {
+      $('#err_'+rp).text('0.0').removeClass('sum-mismatch');
+    }
+
+    // Update column (edit other activities to keep the sum constant)
+    // NB: set the cell red and bold if value is negative
+    coltot = parseFloat($('#dtot_'+day).text());
+    colsum = 0;
+    prjsum = 0;
+    $('span[id^=rp_]').each(function() {
+      // Parse ID
+      m = $(this).prop('id').match(/^rp_(\d+)_(\d+)_(\d+)$/);
+      if(m == null)
+        return;
+      // Add to colsum if day match and ID is not -1
+      if(parseInt(m[2]) == day && parseInt(m[1]) != -1)
+        colsum += parseFloat($(this).text());
+      // Add to prjsum if day match and project ID match
+      if(parseInt(m[2]) == day && parseInt(m[3]) == p)
+        prjsum += parseFloat($(this).text());
+    });
+
+    // Update other activities
+    oa = $("span[id^='rp_-1_"+day+"_']");
+    delta = coltot - colsum;
+    oa.text(delta.toFixed(1));
+    if(delta < 0) {
+      oa.addClass('sum-mismatch');
+    } else {
+      oa.removeClass('sum-mismatch');
+    }
+
+    // Update project values if needed
+    prj_day = $('#ps_'+p+'_'+day)
+    if(prj_day.length) {
+      prj_day.text(prjsum.toFixed(1));
+      // Update project line sum and error
+      prj_tot = parseFloat($('#pstot_'+p).text());
+      prj_tot_sum = 0;
+      $("span[id^='ps_"+p+"_']").each(function() {
+        prj_tot_sum += parseFloat($(this).text());
+      });
+      delta = prj_tot_sum - prj_tot;
+      if(delta != 0) {
+        $('#pserr_'+p).text(delta.toFixed(1)).addClass('sum-mismatch');
+      } else {
+        $('#pserr_'+p).text('0.0').removeClass('sum-mismatch');
+      }
+    }
+  }
+
+  // Dump data to JSON
+  function dumpData() {
+    // First check that all the column sums are fine
+    good = true;
+    $("span[id^='rp_-1_']").each(function() {
+      val = parseFloat($(this).text());
+      if(val < 0)
+        good = false;
+    });
+    if(!good) {
+      return null;
+    }
+    // Then check that all the line sums are fine
+    $("span[id^='err_'").each(function() {
+      val = parseFloat($(this).text());
+      if(val != 0)
+        good = false;
+    });
+    if(!good) {
+      return null;
+    }
+
+    data = {};
+
+    $("span[id^='rp_']").each(function() {
+      // Parse ID
+      m = $(this).prop('id').match(/^rp_(\d+)_(\d+)_(\d+)$/);
+      if(m != null) {
+        rp = parseInt(m[1]);
+        day = parseInt(m[2]);
+        p = parseInt(m[3]);
+        // Check that project is not 'internal'
+        if(rp != -1) {
+          if(!(rp.toString() in data))
+            data[rp] = {}
+          // If cell is marked as mission, ignore
+          if(!$(this).hasClass('missionday')) {
+            // Extract value
+            val = parseFloat($(this).text());
+            // Check that value is not zero
+            if(val > 0) {
+              data[rp][day] = val;
+            }
+          }
+        }
+      }
+    });
+    return data;
+  }
+
+  // Load a timesheet for editing
+  function load_timesheet(month) {
+    $.ajax({
+      url: "{% url 'timesheets_ajax_generate_base' rid year %}/" + month,
+      headers: {
+        'X-CSRFToken': Cookies.get('csrftoken'),
+      },
+      type: 'get',
+      success: format_timesheet,
+      dataType: 'json',
+      contentType: 'application/json',
+      error: function (jqXHR, status, error) {},
+    });
+  }
+
+  $(document).ready(function() {
+    // Load timesheet for January
+    load_timesheet(1);
+
+    // Button action for the dropdown menu
+    $("a[id^=m_]").click(function() {
+      m = $(this).prop('id').match(/^m_(\d+)$/);
+      if(m != null) {
+        month = parseInt(m[1]);
+        // Update current month
+        $("#current-month").text(months[month - 1]);
+        // Load timesheet
+        load_timesheet(month);
+        // Clear save message
+        $('#ts_savemessage').html("").removeClass();
+      }
+    });
+
+    // Create edit dialog
+    $("#edit-dialog").dialog({
+      modal: true,
+      autoOpen: false,
+      show: { effect: "fade", duration: 300 },
+      hide: { effect: "fade", duration: 300 },
+      buttons: [
+        {
+          text: "Update",
+          click: function() {
+            $(this).dialog( "close" );
+            // Update cell and table
+            val = parseFloat($("#edit-value").val());
+            if(isNaN(val))
+              return;
+            id = $("#edit-id").val();
+            updateTimesheetTable(id, val);
+          }
+        },
+        {
+          text: "Cancel",
+          click: function() {
+            $(this).dialog( "close" );
+          }
+        },
+      ]
+    });
+
+    // Save dialog
+    $('#saving_dialog').dialog({
+      hide: { effect: 'fade', duration: 300 },
+      show: { effect: 'fade', duration: 300 },
+      autoOpen: false,
+    });
+
+    // Save button action
+    $('#ts_save_top').click(function() {
+      save_ts();
+    });
+    $('#ts_save_bottom').click(function() {
+      save_ts();
+    });
+
+    function save_ts() {
+      // Open wait dialog
+      $('#saving_dialog').dialog("open");
+      // Dump data
+      var data = dumpData();
+      if(data === null) {
+        // Data is not consistent
+        $('#saving_dialog').dialog("close");
+        msg = $('#ts_savemessage')
+        msg.html("")
+        msg.removeClass();
+        msg.addClass("alert").addClass("alert-danger");
+        $('<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>').appendTo(msg);
+        $('<span class="sr-only">Error:</span>').appendTo(msg);
+        $(document.createTextNode(" Save failed. Data is not consistent. Check the data and try again.")).appendTo(msg);
+        return;
+      }
+      // Ajax post data to server
+      month = months.indexOf($('#current-month').text()) + 1;
+      $.ajax({
+        url: "{% url 'timesheets_ajax_generate_base' rid year %}/" + month,
+        headers: {
+          'X-CSRFToken': Cookies.get('csrftoken'),
+        },
+        type: 'post',
+        data: JSON.stringify(data),
+        success: function(data) {
+          $('#saving_dialog').dialog("close");
+          // Clear message
+          msg = $('#ts_savemessage')
+          msg.html("")
+          msg.removeClass();
+          if(data.saveok) {
+            msg.addClass("alert").addClass("alert-success");
+            $('<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>').appendTo(msg);
+            $(document.createTextNode(" Save successful")).appendTo(msg);
+
+          } else {
+            msg.addClass("alert").addClass("alert-danger");
+            $('<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>').appendTo(msg);
+            $('<span class="sr-only">Error:</span>').appendTo(msg);
+            $(document.createTextNode(" Save failed (" + data.error + ")")).appendTo(msg);
+          }
+        },
+        dataType: 'json',
+        contentType: 'application/json',
+        error: function (jqXHR, status, error) {
+          $('#saving_dialog').dialog("close");
+          // Clear message
+          msg = $('#ts_savemessage')
+          msg.html("")
+          msg.removeClass();
+          msg.addClass("alert").addClass("alert-danger");
+          $('<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>').appendTo(msg);
+          $('<span class="sr-only">Error:</span>').appendTo(msg);
+          $(document.createTextNode(" Save failed (" + error + ")")).appendTo(msg);
+        },
+      });
+    }
+
+    $("#prev-month").click(function() {
+      // Get current month
+      m = months.indexOf($('#current-month').text());
+      if(m == -1 || m == 0) {
+        return;
+      }
+      // Update month ID
+      m -= 1;
+      // Update current month
+      $("#current-month").text(months[m]);
+      // Load timesheet
+      load_timesheet(m + 1);
+      // Clear save message
+      $('#ts_savemessage').html("").removeClass();
+      if(m == 0) {
+        $('#prev-month').prop('disabled', true);
+      }
+      $('#next-month').prop('disabled', false);
+    });
+
+    $("#next-month").click(function() {
+      m = months.indexOf($('#current-month').text());
+      if(m == -1 || m == months.length - 1) {
+        return;
+      }
+      // Update month ID
+      m += 1;
+      // Update current month
+      $("#current-month").text(months[m]);
+      // Load timesheet
+      load_timesheet(m + 1);
+      // Clear save message
+      $('#ts_savemessage').html("").removeClass();
+      if(m >= months.length - 1) {
+        $('#next-month').prop('disabled', true);
+      }
+      $('#prev-month').prop('disabled', false);
+    });
+  });
+</script>
+
+{% endblock %}

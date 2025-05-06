@@ -1,0 +1,45 @@
+{% extends "UdyniManagement/index.html" %}
+
+{% block page %}
+
+<div class="container">
+
+  <!-- Outer Row -->
+  <div class="row justify-content-center">
+    <div class="col-md-9">
+      <div class="card o-hidden border-0 shadow-lg my-5">
+        <div class="card-body p-0">
+          <!-- Nested Row within Card Body -->
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="p-5">
+                {% if verified %}
+                  <div class="text-center">
+                    <h1 class="h4 text-gray-900 mb-4">Verification successful</h1>
+                  </div>
+                  <div class="text-justify">
+                    Your email address has been verified. You request has been forwarded to site administrators for review.
+                    You will shortly receive an email with further instructions to activate you account.
+                  </div>
+                {% else %}
+                  <div class="text-center">
+                    <h1 class="h4 text-gray-900 mb-4">Verification failed</h1>
+                  </div>
+                  <div class="text-justify">
+                    This link is invalid or exipired. Please submit a new registration request.
+                  </div>
+                {% endif %}
+                <hr>
+                <div class="text-center small">
+                  Already registered? Login <a href="{% url 'account_login' %}">here</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "UdyniManagement/page.html" %}
+{% block content %}
+
+<a href="{% url 'conflicts_add' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Add project">
+  <span class="icon text-white-50">
+    <i class="fas fa-circle-plus"></i>
+  </span>
+  <span class="text">Add conflict of interest</span>
+</a>
+
+
+<div class="card mb-4">
+  <div class="card-body table-responsive">
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+      <thead>
+        <tr>
+          <th>Researcher</th>
+          <th>Director</th>
+          <th>Delegate</th>
+          <th>Start date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for conflict in object_list %}
+          <tr>
+            <td>{{ conflict.researcher }}</td>
+            <td>{{ conflict.director }}</td>
+            <td>{{ conflict.delegate }}</td>
+            <td>{{ conflict.start_date }}</td>
+            <td class="col-actions">
+              <a href="{% url 'conflicts_mod' pk=conflict.id %}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+              <a href="{% url 'conflicts_del' pk=conflict.id %}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

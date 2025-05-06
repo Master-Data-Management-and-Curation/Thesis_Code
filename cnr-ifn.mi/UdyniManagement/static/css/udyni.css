@@ -1,0 +1,122 @@
+
+.udyni-logo > img {
+  height: 4rem;
+}
+
+.udyni-logo-name {
+  margin-top: 5px;
+  margin-left: -5px;
+}
+
+.udyni-logo-name > img {
+  height: 4rem;
+}
+
+@media (max-width: 768px) {
+  .udyni-logo-name {
+	  display: none;
+  }
+}
+
+table.reporting tr > td.col-actions {
+  width: 70px;
+}
+
+/* TIMESHEETS tables */
+table.timesheet {
+  color: black;
+  cursor: default;
+  font-size: 10pt;
+}
+
+table.timesheet td.holiday {
+  background-color: #FEEFDA !important;
+}
+
+table.timesheet tr.days > th {
+  /* background-color: #B7D4FF; */
+  border-bottom: 2px solid black;
+}
+
+table.timesheet tr.days > th.day {
+  width: 2.5em;
+  text-align: center;
+}
+
+table.timesheet tr.project > td {
+  border-bottom: 1px solid black;
+}
+
+table.timesheet tr.project > td.hours {
+  text-align: center;
+}
+
+table.timesheet tr > td {
+  padding-left: 2px;
+  padding-right: 2px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+table.timesheet tr.project.has_wps > td {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+table.timesheet tr.wp > td {
+  border-bottom: 0px;
+}
+
+table.timesheet tr.wp > td.hours {
+  text-align: center;
+  color: #7d7d7d;
+}
+
+table.timesheet tr.wp.last_wp > td {
+  border-bottom: 1px solid black;
+}
+
+table.timesheet tr.wp > td.header {
+  padding-left: 15px;
+}
+
+table.timesheet tr.absences > td {
+  border-bottom: 2px solid black;
+}
+
+table.timesheet tr.absences > td.value {
+  text-align: center;
+}
+
+table.timesheet tr.total > td {
+  border-bottom: 0px;
+}
+
+table.timesheet tr.total > td.hours {
+  text-align: center;
+}
+
+table.timesheet tr.total > td.total {
+  font-weight: bold;
+}
+
+table.timesheet td.total {
+  border-left: 1px solid black;
+}
+
+table.timesheet td.sum-mismatch {
+  color: darkred !important;
+  font-weight: bold;
+}
+
+table.timesheet td.editable-cell {
+  cursor: pointer;
+  background-color: #e0e0e0;
+}
+
+table.timesheet td.modified {
+  background-color: aquamarine !important;
+}
+
+table.table-reporting {
+  font-size: 10pt;
+}

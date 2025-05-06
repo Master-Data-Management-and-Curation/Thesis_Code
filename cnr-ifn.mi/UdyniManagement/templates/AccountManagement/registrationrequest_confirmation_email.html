@@ -1,0 +1,16 @@
+{% autoescape off %}
+
+You're receiving this email because you submitted a registration request for the UDynI Management Intranet.
+
+Please visit the following page to confirm your email address and submit your request for review:
+
+{{ protocol }}://{{ domain }}{% url 'account_registration_verify' token=token %}
+
+If you have not submitted this registration request, you can just ignore the request. It will get discarded automatically.
+
+
+Thanks for using our site!
+
+The UDynI Management Intranet team
+
+{% endautoescape %}

@@ -1,0 +1,573 @@
+{% extends "UdyniManagement/page.html" %}
+{% load tr_month %}
+{% load static %}
+
+{% block content %}
+
+<div class="d-flex flex-row mb-4">
+  <a href="{% url 'timesheets_view' %}" class="btn btn-primary btn-icon-split mr-2" aria-label="Back">
+    <span class="icon text-white-50">
+        <i class="fas fa-circle-arrow-left"></i>
+    </span>
+    <span class="text">Back</span>
+  </a>
+  <div class="dropdown">
+    <button class="btn btn-primary dropdown-toggle mr-2" type="button" id="month-selector" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+      <span class="text" id="current-month">{% if month %}{{ month | month_num2en }}{% else %}{{ months.0 | month_num2en }}{% endif %}</span>
+      <span class="caret"></span>
+    </button>
+    <div class="dropdown-menu" aria-labelledby="month-selector">
+      {% for m in months %}
+        <a class="dropdown-item" id="m_{{ m }}">{{ m | month_num2en }}</a>
+      {% endfor %}
+    </div>
+  </div>
+  <button class="btn btn-primary btn-circle mr-2" type="button" id="prev-month" aria-label="Previous"{% if not month or month == 1 %} disabled{% endif %}>
+    <i class="fas fa-circle-arrow-left"></i>
+  </button>
+  <button class="btn btn-primary btn-circle mr-2" type="button" id="next-month" data-label="Next"{% if month and month == 12 %} disabled{% endif %}>
+    <i class="fas fa-circle-arrow-right"></i>
+  </button>
+  <button id="ts_save_top" type="button" class="btn btn-primary btn-icon-split ml-auto" aria-label="Save">
+    <span class="icon text-white-50">
+      <i class="fas fa-floppy-disk"></i>
+    </span>
+    <span class="text">Save</span>
+  </button>
+</div>
+
+<div class="modal" tabindex="-1" id="edit-dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body">
+        <div class="text" id="edit-dialog-message"></div>
+        <input type="hidden" value="" id="edit-id" />
+        <input type="hidden" value="" id="edit-maxhours" />
+        <input class="form-control" type="number" min="0" max="0" step="0.1" id="edit-value" value="0.0" />
+        <div id="edit-dialog-feedback" class="invalid-feedback" style="display: hidden"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-info btn-sm mr-2" id="edit-dialog-halfday">
+          <span class="icon text-white-50">
+            <i class="fas fa-plus"></i>
+          </span>
+          <span class="text">Half day (H)</span>
+        </button>
+        <button class="btn btn-info btn-sm mr-2" id="edit-dialog-p1">
+          <span class="icon text-white-50">
+            <i class="fas fa-plus"></i>
+          </span>
+          <span class="text">1</span>
+        </button>
+        <button class="btn btn-info btn-sm mr-2" id="edit-dialog-p2">
+          <span class="icon text-white-50">
+            <i class="fas fa-plus"></i>
+          </span>
+          <span class="text">2</span>
+        </button>
+        <button class="btn btn-success btn-icon-split btn-sm mr-2" id="edit-dialog-update">
+          <span class="icon text-white-50">
+            <i class="fas fa-check"></i>
+          </span>
+          <span class="text">Update</span>
+        </button>
+        <button class="btn btn-danger btn-icon-split btn-sm mr-2" id="edit-dialog-cancel">
+          <span class="icon text-white-50">
+            <i class="fas fa-xmark"></i>
+          </span>
+          <span class="text">Cancel</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" tabindex="-1" id="saving-dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="spinner-border d-none ml-2" role="status" id="loading_spinner">
+        <span class="sr-only">Loading...</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body table-responsive" id="timesheet"></div>
+</div>
+<div class="card mb-4">
+  <div class="card-body d-flex flex-row">
+    <div role="alert" id="ts_savemessage"></div>
+    <div class="ml-auto">
+      <button id="ts_save_bottom" disabled="disabled" type="button" class="btn btn-primary btn-icon-split" aria-label="Save">
+        <span class="icon text-white-50">
+          <i class="fas fa-floppy-disk"></i>
+        </span>
+        <span class="text">Save</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block page-javascript %}
+<script type="text/javascript" src="{% static 'js/timesheets.js' %}"></script>
+<script type="text/javascript">
+  // Months names
+  const months = [{% for m in months %}"{{ m | month_num2en }}", {% endfor %}];
+  var ts = null;
+  var current_month = null;
+
+  // Update status message
+  function update_status() {
+    cells = $("td");
+    if(cells.hasClass('sum-mismatch')) {
+      $("#ts_save_top").prop('disabled', true);
+      $("#ts_save_bottom").prop('disabled', true);
+      update_status_message($("#ts_savemessage"), 'inconsistent');
+    } else if(cells.hasClass('modified')) {
+      $("#ts_save_top").prop('disabled', false);
+      $("#ts_save_bottom").prop('disabled', false);
+      update_status_message($("#ts_savemessage"), 'modified');
+    } else {
+      $("#ts_save_top").prop('disabled', true);
+      $("#ts_save_bottom").prop('disabled', true);
+      update_status_message($("#ts_savemessage"), 'unmodified');
+    }
+  }
+
+  // Format a timesheet (callback for a successful ajax call)
+  function format_timesheet(data) {
+    // Root
+    root = $("#timesheet");
+    // Clear timesheet
+    root.html("");
+
+    if(data.error) {
+      // Error message
+      card = $('<div class="card border-left-danger mb-2" role="alert">').appendTo(root);
+      card = $('<div class="card-body d-flex flex-row">').appendTo(card);
+      msg = $('<div class="p-1">').appendTo(card);
+      $('<i class="fas fa-triangle-exclamation text-lg" aria-hidden="true"></i>').appendTo(msg);
+      $('<span class="sr-only">Error:</span>').appendTo(msg);
+      $(document.createTextNode(" " + data.error)).appendTo(msg);
+      return;
+    }
+
+    // Store timesheet data
+    ts = data.ts;
+
+    // Create table
+    table = format_ts_table(root, ts);
+    current_month = data.month;
+
+    // Enable click action to edit values
+    $(".editable-cell").click(function() {
+      // Extract period ID and month ID
+      id = $(this).attr('id');
+      m = id.match(/^rp_([w]?)(\d+)_(\d+)_(\d+)$/);
+      if(m === null)
+        return;
+      wp = m[1];              // is WP
+      rp = parseInt(m[2]);    // project or WP ID
+      day = parseInt(m[3]);   // day index
+      p = parseInt(m[4]);     // project line number (for sums)
+
+      // Ignore internal time
+      if(rp == -1)
+        return;
+
+        // Set value
+      $("#edit-value").val($(this).text());
+
+      // Set maximum number of hours
+      max_d = parseFloat($("#dtot_" + day).text());     // Maximum hours in the day
+      max_p = parseFloat($("#tot_" + wp + rp).text());  // Maximum hours in project / WP
+      max = Math.min(max_d, max_p);
+      $("#edit-value").prop('max', max);
+
+      // Set current ID
+      $("#edit-id").val(id);
+
+      // Get available hours, disable HD button if needed and update message
+      h = parseFloat($("td[id^='rp_-1_" + day + "']").text());
+      if(h >= 3.6 && Math.min(max_d, max_p) >= 3.6) {
+        $("#edit-dialog-halfday").prop('disabled', false);
+      } else {
+        $("#edit-dialog-halfday").prop('disabled', true);
+      }
+
+      // Maximum hours that can be added to the current day
+      perr = -parseFloat($("td[id^='err_" + wp + rp + "']").text());
+      available = Math.min(perr, h);
+      if(Math.abs(perr) < 0.001) {
+        $("#edit-dialog-message").text("All hours have been reported.");
+        $("#edit-dialog-feedback").hide()
+        $("#edit-value").removeClass('is-invalid');
+      } else {
+        if(available < 0 ) {
+          $("#edit-dialog-message").text("You have to remove " + Math.abs(available).toFixed(1) + " hours from the project / WP");
+          $("#edit-value").addClass('is-invalid');
+          $("#edit-dialog-feedback").text("Warning: you've set more than available");
+        } else {
+          $("#edit-dialog-message").text("You can add a maximum of " + available.toFixed(1) + " to current day");
+          $("#edit-dialog-feedback").hide();
+          $("#edit-value").removeClass('is-invalid');
+        }
+      }
+      $("#edit-maxhours").val(available);
+
+      // Open dialog
+      $("#edit-dialog").modal("show");
+    });
+
+    // Update status
+    update_status();
+
+    // Disable save button
+    $("#ts_save_top").prop('disabled', true);
+    $("#ts_save_bottom").prop('disabled', true);
+  }
+
+  // Update the modified cell and all the sums over columns and lines
+  // (an also project line if the modification was on a WP)
+  function updateTimesheetTable(id, val) {
+    // Parse ID
+    m = id.match(/^rp_([w]?)(\d+)_(\d+)_(\d+)$/);
+    if(m == null)
+      return;
+    wp = m[1];              // is WP
+    rp = parseInt(m[2]);    // project or WP ID
+    day = parseInt(m[3]);   // day index
+    p = parseInt(m[4]);     // project line number (for sums)
+
+    // Update cell value
+    $('#'+id).text(val.toFixed(1));
+
+    // Update line sum
+    linetot = parseFloat($('#tot_' + wp + rp).text());
+    linesum = 0.0;
+    $("td[id^='rp_" + wp + rp + "_']").each(function() {
+      linesum += parseFloat($(this).text());
+    });
+    $('#sum_' + wp + rp).text(linesum.toFixed(1));
+    delta = linesum - linetot;
+    if(Math.abs(delta) > 0.001) {
+      $('#err_' + wp + rp).text(delta.toFixed(1)).addClass('sum-mismatch');
+    } else {
+      $('#err_' + wp + rp).text('0.0').removeClass('sum-mismatch');
+    }
+
+    // Update column (edit other activities to keep the sum constant)
+    // NB: set the cell red and bold if value is negative
+    coltot = parseFloat($('#dtot_'+day).text());
+    colsum = 0;
+    prjsum = 0;
+    $("td[id^='rp_']").each(function() {
+      // Parse ID
+      m = $(this).prop('id').match(/^rp_([w]?)(\d+)_(\d+)_(\d+)$/);
+      if(m == null)
+        return;
+      // Add to colsum if day match and ID is not -1
+      if(parseInt(m[3]) == day && parseInt(m[2]) != -1)
+        colsum += parseFloat($(this).text());
+      // Add to prjsum if day match and project ID match
+      if(parseInt(m[3]) == day && parseInt(m[4]) == p)
+        prjsum += parseFloat($(this).text());
+    });
+
+    // Update other activities
+    oa = $("td[id^='rp_-1_" + day + "_']");
+    delta = coltot - colsum;
+    oa.text(delta.toFixed(1));
+    if(delta < -0.001) {
+      oa.addClass('sum-mismatch');
+    } else {
+      oa.removeClass('sum-mismatch');
+    }
+
+    // Update project values if needed
+    prj_day = $('#ps_' + p + '_' + day)
+    if(prj_day.length) {
+      prj_day.text(prjsum.toFixed(1));
+      // Update project line sum and error
+      prj_tot = parseFloat($('#pstot_' + p).text());
+      prj_tot_sum = 0;
+      $("td[id^='ps_" + p + "_']").each(function() {
+        prj_tot_sum += parseFloat($(this).text());
+      });
+      delta = prj_tot_sum - prj_tot;
+      if(Math.abs(delta) > 0.001) {
+        $('#pserr_' + p).text(delta.toFixed(1)).addClass('sum-mismatch');
+      } else {
+        $('#pserr_' + p).text('0.0').removeClass('sum-mismatch');
+      }
+    }
+
+    // Check which cells have been modified
+    $("td[id^='rp_']").each(function(i, el) {
+      // Parse ID
+      m = el.id.match(/^rp_([w]?)(\d+)_(\d+)_(\d+)$/);
+      if(m == null)
+        return;
+      let w = m[1] != '';
+      let id = parseInt(m[2]);
+      let day = parseInt(m[3]);
+      let pid = parseInt(m[4]);
+      if(id == -1)
+        return;
+
+      if(w) {
+        for(let j = 0; j < ts.projects[pid].wps.length; j++) {
+          if(ts.projects[pid].wps[j].id == id) {
+            delta = ts.projects[pid].wps[j].days[day] - parseFloat(el.innerText)
+            if(Math.abs(delta) > 0.001) {
+              $(this).addClass('modified');
+            } else {
+              $(this).removeClass('modified');
+            }
+          }
+        }
+      } else {
+        delta = ts.projects[pid].days[day] - parseFloat(el.innerText);
+        if(Math.abs(delta) > 0.001) {
+          $(this).addClass('modified');
+        } else {
+          $(this).removeClass('modified');
+        }
+      }
+    });
+    update_status();
+  }
+
+  // Dump data to JSON
+  function dumpData() {
+    // Check that there are no inconsistencies
+    if($('td').hasClass('sum-mismatch')) {
+      return null;
+    }
+
+    data = {};
+    data.projects = {};
+    data.workpackages = {};
+
+    // Parse only editable cells
+    $("td.editable-cell").each(function() {
+      m = $(this).prop('id').match(/^rp_([w]?)(\d+)_(\d+)_(\d+)$/);
+      if(m === null)
+        return;
+
+      wp = m[1]
+      rp = parseInt(m[2]);
+      day = parseInt(m[3]);
+      p = parseInt(m[4]);
+
+      // Cells from internal activities should never appear here
+      if(rp == -1)
+        return;
+
+      // Extract value
+      rp = rp.toString();
+      val = parseFloat($(this).text());
+      if(val > 0) {
+        if(wp) {
+          if(!(rp in data.workpackages))
+            data.workpackages[rp] = {};
+          data.workpackages[rp][day] = val;
+        } else {
+          if(!(rp in data.projects))
+            data.projects[rp] = {};
+          data.projects[rp][day] = val;
+        }
+      }
+    });
+    return data;
+  }
+
+  // Load a timesheet for editing
+  function load_timesheet(month) {
+    // Set spinner
+    root = $("#timesheet");
+    root.html('<div class="d-flex justify-content-center"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>');
+    $.ajax({
+      url: "{% url 'timesheets_ajax_generate_base' researcher.pk year %}/" + month,
+      headers: {
+        'X-CSRFToken': Cookies.get('csrftoken'),
+      },
+      type: 'get',
+      success: format_timesheet,
+      dataType: 'json',
+      contentType: 'application/json',
+      error: function (jqXHR, status, error) {},
+    });
+  }
+
+  $(document).ready(function() {
+    // Load timesheet for January
+    load_timesheet({% if month %}{{ month }}{% else %}1{% endif %});
+
+    // Button action for the dropdown menu
+    $("a[id^=m_]").click(function() {
+      m = $(this).prop('id').match(/^m_(\d+)$/);
+      if(m !== null) {
+        month = parseInt(m[1]);
+        // Update current month
+        $("#current-month").text(months[month - 1]);
+        // Load timesheet
+        load_timesheet(month);
+        // Clear save message
+        $('#ts_savemessage').html("").removeClass();
+      }
+    });
+
+    // Fetch value and update timesheet
+    function editDialogUpdateTimesheet() {
+      val = parseFloat($("#edit-value").val());
+      if(isNaN(val))
+        return;
+      id = $("#edit-id").val();
+      updateTimesheetTable(id, val);
+    }
+
+    // Edit dialog buttons callbacks
+    $("#edit-dialog-update").click(function() {
+      // Close dialog
+      $("#edit-dialog").modal("hide");
+      // Update
+      editDialogUpdateTimesheet();
+    });
+
+    // Add delta hours to the form control
+    function add_hours(delta) {
+      val = parseFloat($("#edit-value").val()) + delta;
+      max = parseFloat($("#edit-maxhours").val());
+      if(val > max) {
+        $("#edit-dialog-feedback").text("Warning: you're adding more hours that available");
+        $("#edit-dialog-feedback").show();
+        $("#edit-value").addClass('is-invalid');
+      }
+      $("#edit-value").val(val);
+    }
+    // Add half day
+    $("#edit-dialog-halfday").click(function() {
+      add_hours(3.6);
+    });
+
+    // Hook for 'h' key press events
+    $(document).keypress(function(event) {
+      if((event.charCode == 72 || event.charCode == 104) && $('#edit-dialog').hasClass('show')) {
+        $("#edit-dialog").modal("hide");
+        add_hours(3.6);
+        editDialogUpdateTimesheet();
+      }
+    });
+
+    // Add 1 hour
+    $("#edit-dialog-p1").click(function() {
+      add_hours(1);
+    });
+
+    // Add 2 hour
+    $("#edit-dialog-p2").click(function() {
+      add_hours(2);
+    });
+
+    // Cancel edit
+    $("#edit-dialog-cancel").click(function() {
+      // Close dialog
+      $("#edit-dialog").modal("hide");
+    });
+
+    // Save button action
+    $('#ts_save_top').click(function() {
+      save_ts();
+    });
+    $('#ts_save_bottom').click(function() {
+      save_ts();
+    });
+
+    function save_ts() {
+      // Open wait dialog
+      $('#saving_dialog').modal("show");
+
+      // Dump data
+      var data = dumpData();
+      if(data === null) {
+        // Data is not consistent
+        $('#saving_dialog').modal("hide");
+        return;
+      }
+
+      // Ajax post data to server
+      month = months.indexOf($('#current-month').text()) + 1;
+      $.ajax({
+        url: "{% url 'timesheets_ajax_generate_base' rid year %}/" + month,
+        headers: {
+          'X-CSRFToken': Cookies.get('csrftoken'),
+        },
+        type: 'post',
+        data: JSON.stringify(data),
+        dataType: 'json',
+        contentType: 'application/json',
+        success: function(data) {
+          $('#saving_dialog').modal("hide");
+          // Update message
+          if(data.saveok) {
+            // Reload timesheet
+            load_timesheet(current_month);
+            update_status_message($('#ts_savemessage'), 'saveok');
+          } else {
+            update_status_message($('#ts_savemessage'), 'savefailed', data.error);
+          }
+        },
+        error: function (jqXHR, status, error) {
+          $('#saving_dialog').modal("hide");
+          // Update message
+          update_status_message($('#ts_savemessage'), 'savefailed', data.error);
+        },
+      });
+    }
+
+    $("#prev-month").click(function() {
+      // Get current month
+      m = months.indexOf($('#current-month').text());
+      if(m == -1 || m == 0) {
+        return;
+      }
+      // Update month ID
+      m -= 1;
+      // Update current month
+      $("#current-month").text(months[m]);
+      // Load timesheet
+      load_timesheet(m + 1);
+      // Clear save message
+      $('#ts_savemessage').html("").removeClass();
+      if(m == 0) {
+        $('#prev-month').prop('disabled', true);
+      }
+      $('#next-month').prop('disabled', false);
+    });
+
+    $("#next-month").click(function() {
+      m = months.indexOf($('#current-month').text());
+      if(m == -1 || m == months.length - 1) {
+        return;
+      }
+      // Update month ID
+      m += 1;
+      // Update current month
+      $("#current-month").text(months[m]);
+      // Load timesheet
+      load_timesheet(m + 1);
+      // Clear save message
+      $('#ts_savemessage').html("").removeClass();
+      if(m >= months.length - 1) {
+        $('#next-month').prop('disabled', true);
+      }
+      $('#prev-month').prop('disabled', false);
+    });
+  });
+</script>
+
+{% endblock %}

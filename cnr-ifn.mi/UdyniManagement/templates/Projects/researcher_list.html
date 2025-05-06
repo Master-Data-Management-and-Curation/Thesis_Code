@@ -1,0 +1,60 @@
+{% extends "UdyniManagement/page.html" %}
+{% block content %}
+
+{% if can_edit %}
+  <a href="{% url 'researcher_add' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Add researcher">
+    <span class="icon text-white-50">
+        <i class="fas fa-circle-plus"></i>
+    </span>
+    <span class="text">Add researcher</span>
+  </a>
+{% endif %}
+
+<div class="card mb-4">
+  <div class="card-body table-responsive">
+
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Role</th>
+          <th>Username</th>
+          <th>Actions</th>
+        </tr>
+      <thead>
+      <tbody>
+        {% for person in researcher_list %}
+          <tr>
+            <td>{{ person.name }} {{ person.surname }}</td>
+            <td>
+              {% for role in person.roles %}
+                {{ role.get_role_display }} from {{ role.start_date | date:"M d, Y" }}
+                {% if can_edit_own and request.user.username == person.user or can_edit %}
+                  <a href="{% url 'researcher_role_mod' researcher=person.id pk=role.id %}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+                  <a href="{% url 'researcher_role_del' researcher=person.id pk=role.id %}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+                {% endif %}
+                <br />
+              {% endfor %}
+            </td>
+            <td>
+              {% if person.user %}
+                {{ person.user }}
+              {% endif %}
+            </td>
+            <td class="col-actions">
+              {% if can_edit_own and request.user.username == person.user or can_edit %}
+                <a href="{% url 'researcher_role_add' researcher=person.id %}" aria-label="Add role"><i class="fas fa-circle-plus" aria-hidden="true"></i></a>
+              {% endif %}
+              {% if can_edit %}
+                <a href="{% url 'researcher_mod' pk=person.id %}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+                <a href="{% url 'researcher_del' pk=person.id %}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

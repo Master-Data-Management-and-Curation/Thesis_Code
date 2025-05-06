@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="UDynI Management Intranet">
+  <meta name="author" content="Michele Devetta">
+
+  <title>{{ title }}</title>
+
+  <!-- Fontawesome v6 -->
+  <link href="{% static 'css/fa-all.min.css' %}" rel="stylesheet" type="text/css">
+
+  <!-- Nunito Sans -->
+  <link
+      href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+      rel="stylesheet">
+
+  <!-- Style from SB-Admin 2: https://startbootstrap.com/theme/sb-admin-2 -->
+  <link href="{% static 'css/sb-admin-2.min.css' %}" rel="stylesheet">
+
+  <!-- JQuery UI -->
+  <link href="{% static 'css/jquery-ui-1.13.1.min.css' %}" rel="stylesheet">
+
+  <!-- Select2 (https://select2.org/) -->
+  <link href="{% static 'css/select2-4.0.13.min.css' %}" rel="stylesheet">
+
+  <!-- Custom styles -->
+  <link href="{% static 'css/udyni.css' %}" rel="stylesheet">
+
+  <link rel="shortcut icon" type="image/png" href="{% static 'img/accounting.png' %}"/>
+
+</head>
+
+<body id="page-top">
+
+  {% block page %}
+
+  {% endblock %}
+
+  <!-- Bootstrap core JavaScript-->
+  <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+  <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+
+  <!-- Core plugin JavaScript-->
+  <script src="{% static 'js/jquery.easing.min.js' %}"></script>
+  <script src="{% static 'js/jquery-ui-1.13.1.min.js' %}"></script>
+  <script src="{% static 'js/js.cookie.min.js' %}"></script>
+
+  <!-- Custom scripts for all pages-->
+  <script src="{% static 'js/sb-admin-2.min.js' %}"></script>
+
+  <!-- Menu script -->
+  <script src="{% static 'js/udyni-menu.js' %}"></script>
+
+  <!-- Ajax forms -->
+  <script src="{% static 'js/udyni_ajax_forms.js' %}"></script>
+
+  <!-- Select2 (https://select2.org/) -->
+  <script src="{% static 'js/select2-4.0.13.full.min.js' %}"></script>
+
+  <!-- Page inline scripts -->
+  {% block page-javascript %}
+
+
+  {% endblock %}
+
+</body>
+</html>

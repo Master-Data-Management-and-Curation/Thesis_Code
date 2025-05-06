@@ -1,0 +1,36 @@
+{% extends "UdyniManagement/page.html" %}
+{% load static %}
+{% block content %}
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex row">
+      <div class="m-4">
+        {% if profile_photo %}
+          <img src="data:image/jpeg;base64,{{ profile_photo }}" width="150" class="rounded" />
+        {% else %}
+          <img src="{% static 'img/undraw_profile.svg' %}" width="150" />
+        {% endif %}
+      </div>
+      <div class="m-4">
+        <table class="table table-sm table-hover">
+          <tbody>
+            {% for attr, label, value, editable in profile %}
+              <tr>
+                <td><b>{{ label }}</b></td>
+                <td>{{ value }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if own_profile %}
+        <div class="m-4">
+          <a class="align-top" href="{% url 'account_profile_mod' %}" aria-label="Modify"><i class="fa-solid fa-pencil" aria-hidden="true"></i></a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

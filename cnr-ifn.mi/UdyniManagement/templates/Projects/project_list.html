@@ -1,0 +1,65 @@
+{% extends "UdyniManagement/page.html" %}
+{% block content %}
+
+{% if can_edit %}
+  <a href="{% url 'project_add' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Add project">
+    <span class="icon text-white-50">
+        <i class="fas fa-circle-plus"></i>
+    </span>
+    <span class="text">Add project</span>
+  </a>
+{% endif %}
+
+<div class="card mb-4">
+  <div class="card-body table-responsive">
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Agency</th>
+          <th>Reference</th>
+          <th>Principal investigator</th>
+          <th>Depreciation</th>
+          <th>Sigla ID</th>
+          <th>Workpackages</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for project in object_list %}
+          <tr>
+            <td>{{ project.name }}</td>
+            <td>{{ project.agency }}</td>
+            <td>{{ project.reference }}</td>
+            <td>{{ project.pi }}</td>
+            <td>{{ project.depreciation }}</td>
+            <td>{{ project.sigla_name }}</td>
+            <td>
+              {% if project.workpackages %}
+                {% for wp in project.workpackages %}
+                  <div>
+                    <b>{{ wp.name }}:</b> {{ wp.desc }}
+                    {% if can_edit %}
+                      <a href="{% url 'wp_mod' pk=wp.id %}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+                      <a href="{% url 'wp_del' pk=wp.id %}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            </td>
+
+            <td class="col-actions">
+              {% if can_edit %}
+                <a href="{% url 'project_mod' pk=project.id %}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+                <a href="{% url 'project_del' pk=project.id %}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+                <a href="{% url 'wp_add_prj' project=project.id %}" aria-label="Add workpackage"><i class="fas fa-circle-plus" aria-hidden="true"></i></a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "UdyniManagement/page.html" %}
+{% load generic %}
+{% block content %}
+
+<a href="{% url 'account_permissions_add' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Add permission">
+  <span class="icon text-white-50">
+    <i class="fas fa-circle-plus"></i>
+  </span>
+  <span class="text">Add permission</span>
+</a>
+
+<div class="card mb-4">
+  <div class="card-body table-responsive">
+    <table class="table table-sm table-hover">
+      <thead>
+        <tr>
+          <th>Permission</th>
+          {% for u in users %}
+            <th>{{ u.username }}<br /><small>{{ u.get_full_name }}</small></th>
+          {% endfor %}
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for codename, perm in permission_map.items %}
+          <tr>
+            <td data-toggle="tooltip" title="{{ perm.name }}">{{ perm.app }}.{{ codename }}</td>
+            {% for u in perm.users %}
+              {% with user=users|listindex:forloop.counter0 %}
+                {% if u %}
+                  <td><span class="text-success{% if not user.is_staff %} edit-perm" role="button" data-user="{{ user.pk }}" data-permission="{{ perm.app }}.{{ codename }}{% endif %}"><i class="fa-solid fa-check"></i></span></td>
+                {% else %}
+                  <td><span class="text-danger{% if not user.is_staff %} edit-perm" role="button" data-user="{{ user.pk }}" data-permission="{{ perm.app }}.{{ codename }}{% endif %}"><i class="fa-solid fa-xmark"></i></span></td>
+                {% endif %}
+              {% endwith %}
+            {% endfor %}
+            <td>
+              <a href="{% url 'account_permissions_mod' pk=perm.pk %}" aria-label="Modify"><i class="fa-solid fa-pencil" aria-hidden="true"></i></a>
+              <a href="{% url 'account_permissions_del' pk=perm.pk %}" aria-label="Delete"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block page-javascript %}
+<script>
+    $(document).ready(function() {
+        $('[data-toggle="tooltip"]').tooltip();
+
+        $('.edit-perm').click(function() {
+            let cell = $(this);
+            let user = cell.attr('data-user');
+            let label = cell.attr('data-permission');
+            let status;
+            if(cell.hasClass('text-success')) {
+                status = 1;
+            } else if(cell.hasClass('text-danger')) {
+                status = 0;
+            } else {
+                // Ignore
+                return;
+            }
+            // Send ajax request
+            $.ajax({
+                url : "{% url 'permission_change' %}",
+                headers: {
+                    'X-CSRFToken': Cookies.get('csrftoken'),
+                },
+                type: "POST",
+                data : {
+                    user: user,
+                    label: label,
+                    status: status,
+                },
+                success: function(data, textStatus, jqXHR) {
+                    if(data.status == 1) {
+                        cell.html('<i class="fa-solid fa-check">');
+                        cell.removeClass('text-danger');
+                        cell.addClass('text-success');
+                    } else {
+                        cell.html('<i class="fa-solid fa-xmark">');
+                        cell.removeClass('text-success');
+                        cell.addClass('text-danger');
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

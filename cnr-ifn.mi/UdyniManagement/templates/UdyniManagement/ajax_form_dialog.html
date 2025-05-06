@@ -1,0 +1,29 @@
+<div class="modal" tabindex="-1" id="{% if ajax_form_id %}{{ ajax_form_id }}{% else %}ajax-form{% endif %}-dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header" id="{% if ajax_form_id %}{{ ajax_form_id }}{% else %}ajax-form{% endif %}-header">
+            <h5 class="modal-title">Modal title</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        <div class="modal-body" id="{% if ajax_form_id %}{{ ajax_form_id }}{% else %}ajax-form{% endif %}-content">
+            <!-- Form -->
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-success btn-icon-split btn-sm mr-2" id="{% if ajax_form_id %}{{ ajax_form_id }}{% else %}ajax-form{% endif %}-submit">
+            <span class="icon text-white-50">
+                <i class="fas fa-save"></i>
+            </span>
+            <span class="text">Save</span>
+          </button>
+          <button class="btn btn-danger btn-icon-split btn-sm mr-2" id="{% if ajax_form_id %}{{ ajax_form_id }}{% else %}ajax-form{% endif %}-cancel">
+            <span class="icon text-white-50">
+                <i class="fas fa-xmark"></i>
+            </span>
+            <span class="text">Cancel</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>

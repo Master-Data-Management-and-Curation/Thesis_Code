@@ -1,0 +1,87 @@
+{% extends "UdyniManagement/page.html" %}
+{% load tr_month %}
+
+{% block content %}
+<a href="{% url 'presencedata_detailyear' researcher=view.kwargs.researcher year=view.kwargs.year %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Back">
+  <span class="icon text-white-50">
+      <i class="fas fa-circle-arrow-left"></i>
+  </span>
+  <span class="text">Back</span>
+</a>
+
+<form action="{% url 'presencedata_update' %}" method="post" name="update_month">
+  {% csrf_token %}
+  <input type="hidden" name="researcher" value="{{ view.kwargs.researcher }}" />
+  <input type="hidden" name="year" value="{{ view.kwargs.year }}" />
+  <input type="hidden" name="month" value="{{ view.kwargs.month }}" />
+
+  <div class="card mb-4">
+    <div class="card-body table-responsive">
+      <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Hours</th>
+            <th>Code</th>
+            <th>TS hours</th>
+            <th>TS Code</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for obj in presences.pres_stat %}
+            <tr>
+              <td>{{ obj.day }}</td>
+              <td>{{ obj.hours | floatformat:-1 }}</td>
+              <td>{{ obj.code_name }}</td>
+              <td><input class="form-control" type="text" name="ts_day_{{ obj.day | date:'d' }}" value="{{ obj.ts_hours | floatformat:-1 }}" /></td>
+              <td>
+                <select class="form-control" name="ts_code_{{ obj.day | date:'d' }}">
+                  {% for choice in choices %}
+                    {% if choice.0 == obj.ts_code %}
+                      <option value="{{ choice.0 }}" selected="selected">{{ choice.1 }}</option>
+                    {% else %}
+                      <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <button type="submit" class="btn btn-primary btn-icon-split" aria-label="Save">
+        <span class="icon text-white-50">
+          <i class="fas fa-floppy-disk"></i>
+        </span>
+        <span class="text">Save</span>
+      </button>
+    </div>
+  </div>
+</form>
+
+<div class="card mb-4">
+  <div class="card-body table-responsive">
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>TS code</th>
+          <th>Description</th>
+          <th>Times used</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for obj in presences.code_stat %}
+          <tr>
+            <td>{{ obj.code_name }}</td>
+            <td>{{ obj.code_ts }}</td>
+            <td>{{ obj.code_desc }}</td>
+            <td>{{ obj.tot_code }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

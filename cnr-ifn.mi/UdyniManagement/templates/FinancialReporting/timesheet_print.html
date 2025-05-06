@@ -1,0 +1,150 @@
+{% load static %}
+{% load tr_month %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="UDynI Management Intranet">
+  <meta name="author" content="Michele Devetta">
+
+  <title>Timesheet for {{ researcher }} - {{ month | month_num2en }}, {{ year }}</title>
+
+  <!-- Style from SB-Admin 2: https://startbootstrap.com/theme/sb-admin-2 -->
+  <link href="{% static 'css/sb-admin-2.min.css' %}" rel="stylesheet">
+
+  <!-- Custom styles -->
+  <link href="{% static 'css/udyni.css' %}" rel="stylesheet">
+
+  <link rel="shortcut icon" type="image/png" href="{% static 'img/accounting.png' %}"/>
+
+</head>
+
+<body>
+
+<h3 id>
+  Time Recording for HORIZON 2020 Actions - <b>{{ month | month_num2en }}, {{ year }}</b>
+</h3>
+
+<div class="d-flex flex-row justify-content-between mb-4">
+  <div class="m-2">
+    <h6 class="px-2">Beneficiary's / Third party's name</h6>
+    <h4 class="px-2">{{ beneficiary }}</h4>
+  </div>
+  <div class="m-2">
+    <h6 class="px-2">Person working on the action</h6>
+    <h4 class="px-2">{{ researcher }}</h4>
+  </div>
+  <div class="m-2">
+    <h6 class="px-2">Type of personnel (see GA art. 6.2.A)</h6>
+    <h4 class="px-2">{{ employment }}</h4>
+  </div>
+</div>
+
+<div class="d-flex">
+  <table class="timesheet mb-2" cellspacing="0" cellpadding="0">
+    <thead>
+      <tr class="days">
+        <th class="header">Day</th>
+        {% for d in ts.days %}
+          <th class="day{% if d.holiday %} holiday{% endif %}">{{ d.n }}</th>
+        {% endfor %}
+        <th class="day total">&Sigma;</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in ts.projects %}
+        <tr class="project{% if p.has_wps %} has_wps{% endif %}">
+          <td class="header">{{ p.name }}: {{ p.ref }}</td>
+          {% for d in p.days %}
+            <td class="hours{% if d.holiday %} holiday{% endif %}">{{ d.h }}</td>
+          {% endfor %}
+          <td class="hours total">{{ p.total }}</td>
+        </tr>
+        {% if p.has_wps %}
+          {% for wp in p.wps %}
+            <tr class="wp{% if wp.last %} last_wp{% endif %}">
+              <td class="header">{{ wp.name }}: {{ wp.desc }}</td>
+              {% for d in wp.days %}
+                <td class="hours{% if d.holiday %} holiday{% endif %}">{{ d.h }}</td>
+              {% endfor %}
+              <td class="hours total">{{ wp.total }}</td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+      {% endfor %}
+      <tr class="absences">
+        <td class="header">Absences</td>
+        {% for a in ts.absence_code %}
+          <td class="value{% if a.holiday %} holiday{% endif %}">{{ a.a }}</td>
+        {% endfor %}
+        <td class="hours total"></td>
+      </tr>
+      <tr class="total">
+        <td class="header">Total</td>
+        {% for d in ts.day_total %}
+          <td class="hours{% if d.holiday %} holiday{% endif %}">{{ d.h }}</td>
+        {% endfor %}
+        <td class="hours total">{{ ts.grand_total }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="d-flex flex-row justify-content-between">
+
+  <div class="d-flex flex-row m-2">
+    <div class="d-flex flex-column">
+      <div class="px-2">SL</div>
+      <div class="px-2">PH</div>
+      <div class="px-2">AH</div>
+      <div class="px-2">MI</div>
+      <div class="px-2">OA</div>
+    </div>
+    <div>
+      <div class="px-2">Sick leave</div>
+      <div class="px-2">Public holidays</div>
+      <div class="px-2">Annual holidays</div>
+      <div class="px-2">Missions</div>
+      <div class="px-2">Other absences</div>
+    </div>
+  </div>
+
+  <div class="d-flex flex-row m-2">
+    <div class="d-flex flex-column">
+      <div class="px-2">Signed (Name of the person):</div>
+      <div class="px-2">Date:</div>
+      <div class="px-2">Signature:</div>
+    </div>
+    <div class="d-flex flex-column">
+      <div class="px-2"><b>{{ researcher }}</b></div>
+      <div class="px-2"><b>{{ ts.sign_day }}</b></div>
+      <div class="px-2 border-bottom" style="height: 1.5em"></div>
+    </div>
+  </div>
+
+  <div class="d-flex flex-row m-2">
+    <div class="d-flex flex-column">
+      {% for person, projects in signatures.items %}
+        <div class="px-2">Supervisor:</div>
+        <div class="px-2"><small>For projects:</small></div>
+        <div class="px-2 mb-2">Signature:</div>
+      {% endfor %}
+    </div>
+    <div class="d-flex flex-column">
+      {% for person, projects in signatures.items %}
+        <div class="px-2"><b>{{ person }}</b></div>
+        <div class="px-2"><b><small>{{ projects }}</small></b></div>
+        <div class="px-2 mb-2 border-bottom" style="height: 1.5em"></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+<script>
+window.onload = function() { window.print(); };
+</script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+{% extends "UdyniManagement/page.html" %}
+{% load tr_month %}
+
+{% block content %}
+
+<form id="import_form" name="import_form" method="post" action="{% url 'presencedata_store' %}">
+{% csrf_token %}
+<input type="hidden" name="researcher" value="{{ researcher.pk }}" />
+{% for year, data_y in summary.items %}
+  <div class="card mb-4">
+    <div class="card-header">
+      <h6 class="m-0 font-weight-bold text-primary">{{ year }}</h6>
+    </div>
+    <div class="card-body table-responsive">
+      <div class="mb-4">Total hours: {{ data_y.total | floatformat:-1 }}</div>
+      <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Month</th>
+            <th>Working days</th>
+            <th>Hours</th>
+            <th>Code summary</th>
+          </tr>
+        <thead>
+        <tbody>
+          {% for month, data_m in data_y.items %}
+            {% if month != 'total' %}
+              <tr>
+                <td><input type="checkbox" checked="checked" name="i_{{ year }}_{{ month }}" /></td>
+                <td>{{ month | month_it2en }}</td>
+                <td>{{ data_m.workingdays }}</td>
+                <td>{{ data_m.hours | floatformat:-1 }}</td>
+                <td>
+                  {% for c, q in data_m.codes.items %}
+                    <i>{{ c }}</i>: {{ q }}<br />
+                  {% endfor %}
+                </td>
+              </tr>
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endfor %}
+
+<div class="d-flex flex-row mb-4">
+  <button type="submit" class="btn btn-success btn-icon-split mr-2" aria-label="Import data">
+    <span class="icon text-white-50">
+      <i class="fas fa-file-import"></i>
+    </span>
+    <span class="text">Import data</span>
+  </button>
+  <a href="{% url 'presencedata_view' %}" aria-label="Cancel" class="btn btn-danger btn-icon-split">
+    <span class="icon text-white-50">
+      <i class="fas fa-xmark"></i>
+    </span>
+    <span class="text">Cancel</span>
+  </a>
+</div>
+</form>
+
+<div id="import_dialog" title="Import in progress">
+    <p>Please wait ...</p>
+</div>
+
+{% endblock %}
+
+{% block page-javascript %}
+
+<script>
+$('#import_dialog').dialog({
+  hide: 'slide',
+  show: 'slide',
+  autoOpen: false,
+});
+
+$(document).ready(function() {
+  $('#import_form').submit(function() {
+    $('#import_dialog').dialog('open');
+  });
+});
+</script>
+
+{% endblock %}

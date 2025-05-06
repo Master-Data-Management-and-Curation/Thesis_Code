@@ -1,0 +1,74 @@
+{% extends "UdyniManagement/page.html" %}
+{% load tr_month %}
+
+{% block content %}
+<a href="{% url 'presencedata_view' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Back">
+  <span class="icon text-white-50">
+      <i class="fas fa-circle-arrow-left"></i>
+  </span>
+  <span class="text">Back</span>
+</a>
+
+<div class="card mb-4">
+  <div class="card-body table-responsive">
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>Working days</th>
+          <th>Total hours</th>
+          <th>Total hours (no missions)</th>
+          <th>Holidays</th>
+          <th>Missions</th>
+          <th>Illness</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for obj in presences.pres_stat %}
+          <tr>
+            <td>{{ obj.month | month_num2en }}</td>
+            <td>{{ obj.working_days }}</td>
+            <td>{{ obj.tot_hours | floatformat:-1 }}</td>
+            <td>{{ obj.tot_hours_nom | floatformat:-1 }}</td>
+            <td>{{ obj.holidays }}</td>
+            <td>{{ obj.missions }}</td>
+            <td>{{ obj.illness_leave }}</td>
+            <td class="col-actions">
+              <a href="{% url 'presencedata_detailmonth' researcher=view.kwargs.researcher year=view.kwargs.year month=obj.month %}" aria-label="Details">
+                <i class="fa-solid fa-list" aria-hidden="true"></i>
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body table-responsive">
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>TS code</th>
+          <th>Description</th>
+          <th>Times used</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for obj in presences.code_stat %}
+          <tr>
+            <td>{{ obj.code_name }}</td>
+            <td>{{ obj.code_ts }}</td>
+            <td>{{ obj.code_desc }}</td>
+            <td>{{ obj.tot_code }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

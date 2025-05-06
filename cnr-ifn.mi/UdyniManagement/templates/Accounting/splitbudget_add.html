@@ -1,0 +1,65 @@
+{% extends 'UdyniManagement/generic_form.html' %}
+{% load euro %}
+
+{% block content %}
+{{ block.super }}
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h6 class="m-0 font-weight-bold text-primary">Stanziamenti</h6>
+  </div>
+  <div class="card-body table-responsive">
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover" id="table_stanziamenti">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Esercizio</th>
+          <th>Voce</th>
+          <th>Stanziamento</th>
+          <th>Variazione +</th>
+          <th>Variazione -</th>
+          <th>Assestato</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in stanziamenti %}
+          <tr>
+            <td><a href="#" id="check_{{ s.pk }}_{{ s.voce.pk }}" aria-label="Select"><i class="fas fa-circle-check" aria-hidden="true"></i></a></td>
+            <td>{{ s.esercizio }}</td>
+            <td>{{ s.voce }}</td>
+            <td>{{ s.stanziamento | euro }}</td>
+            <td>{{ s.var_piu | euro }}</td>
+            <td>{{ s.var_meno | euro }}</td>
+            <td>{{ s.assestato | euro }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block page-javascript %}
+
+<script>
+
+  $(document).ready(function() {
+    $("a[id^='check']").click(function(e) {
+      m = $(this).attr('id').match(/^check_(\d+)_(\d+)$/);
+      if(m != null) {
+        e.preventDefault();
+        v = parseInt(m[2]);
+        $("#id_voce").val(m[2]);
+        line = $(this).parent().parent();
+        $("#table_stanziamenti tr").each(function() { $(this).removeClass('table-primary')});
+        line.addClass('table-primary');
+        y = line.children()[1].textContent;
+        $("#id_year").val(y);
+      }
+    });
+  });
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends "UdyniManagement/page.html" %}
+{% load euro %}
+{% block content %}
+
+<div class="d-flex flex-row">
+  <div class="p-2">
+    <a href="{% url 'acc_split_contab' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Back">
+      <span class="icon text-white-50">
+          <i class="fas fa-circle-arrow-left"></i>
+      </span>
+      <span class="text">Back</span>
+    </a>
+  </div>
+  <div class="p-2">
+    <a href="{% url 'acc_split_budget_list' pk=contab_id %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Edit budget">
+      <span class="icon text-white-50">
+          <i class="fas fa-sack-dollar"></i>
+      </span>
+      <span class="text">Budget</span>
+    </a>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h6 class="m-0 font-weight-bold text-primary">Summary</h6>
+  </div>
+  <div class="card-body table-responsive">
+    <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+      <thead>
+        <th>Voce</th>
+        <th>Stanziamento</th>
+        <th>Variazioni</th>
+        <th>Assestato</th>
+        <th>Impegnato</th>
+        <th>Residuo</th>
+      </thead>
+      <tbody>
+        {% for voce, split in contab.items %}
+          <tr>
+            <td>{{ voce }}: {{ split.desc }}</td>
+            <td>{{ split.stanziamento | euro }}</td>
+            <td>{{ split.variazioni | euro }}</td>
+            <td>{{ split.assestato | euro }}</td>
+            <td>{{ split.impegnato | euro }}</td>
+            <td>{{ split.residuo | euro }}</td>
+          </tr>
+        {% endfor %}
+        <tr>
+          <td></td>
+          <td><b>{{ totals.stanziamento | euro }}</b></td>
+          <td><b>{{ totals.variazioni | euro }}</b></td>
+          <td><b>{{ totals.assestato | euro }}</b></td>
+          <td><b>{{ totals.impegnato | euro }}</b></td>
+          <td><b>{{ totals.residuo | euro }}</b></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="card mb-2">
+      <a href="#variazioni" class="d-block card-header py-3 collapsed" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="variazioni">
+        <h6 class="m-0 font-weight-bold text-secondary">Variazioni</h6>
+      </a>
+      <div class="collapse" id="variazioni" style="">
+        <div class="card-body">
+          <table cellspacing="0" cellpadding="0" class="table table-sm table-hover">
+            <thead>
+              <tr>
+                <th>Origine</th>
+                <th>Origine - Voce</th>
+                <th>Destinazione</th>
+                <th>Destinazione - Voce</th>
+                <th>Importo</th>
+                <th>Actions</th>
+              </tr>
+            <thead>
+            <tbody>
+              {% for var in variazioni %}
+                <tr>
+                  <td>{{ var.src_contab }}</td>
+                  <td>{{ var.src_voce }}</td>
+                  <td>{{ var.dst_contab }}</td>
+                  <td>{{ var.dst_voce }}</td>
+                  <td>{{ var.importo | euro }}</td>
+                  <td>
+                    {% if perms.Accounting.splitcontab_manage %}
+                      <a href="{% url 'acc_split_var_mod' vpk=var.pk %}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+                      <a href="{% url 'acc_split_var_del' vpk=var.pk %}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-2">
+      <a href="#impegni" class="d-block card-header py-3 collapsed" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="impegni">
+        <h6 class="m-0 font-weight-bold text-secondary">Impegni</h6>
+      </a>
+      <div class="collapse" id="impegni" style="">
+        <div class="card-body">
+          {% if can_manage %}
+            <a href="{% url 'acc_split_impegni_add' pk=contab_id %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Aggiungi impegno">
+              <span class="icon text-white-50">
+                  <i class="fas fa-circle-plus"></i>
+              </span>
+              <span class="text">Aggiungi impegno</span>
+            </a>
+          {% endif %}
+          <table cellspacing="0" cellpadding="0" class="table table-sm table-hover">
+            <thead>
+              <tr>
+                <th>Esercizio orig.</th>
+                <th>Numero</th>
+                <th>Voce</th>
+                <th>Descrizione</th>
+                <th>Importo</th>
+                <th>Pagato</th>
+                <th>Actions</th>
+              </tr>
+            <thead>
+            <tbody>
+              {% for label, im in impegni.items %}
+                <tr>
+                  <td>{{ im.esercizio_orig }}</td>
+                  <td>{{ im.numero }}</td>
+                  <td>{{ im.voce.voce }}</td>
+                  <td>{{ im.description }}</td>
+                  <td>{{ im.importo | euro }}</td>
+                  <td>{{ im.pagato | euro }}</td>
+                  <td>
+                    {% if can_manage %}
+                      <a href="{% url 'acc_split_impegni_del' pk=contab_id %}?esercizio={{ im.esercizio_orig }}&numero={{ im.numero }}&voce={{ im.voce.voce }}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

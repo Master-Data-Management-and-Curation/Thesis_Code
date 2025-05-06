@@ -1,0 +1,54 @@
+{% extends "UdyniManagement/page.html" %}
+
+<!-- Used for showing comments tree -->
+{% load mptt_tags %}
+
+{% block content %}
+
+<a href= "{{ back_url }}" class="btn btn-primary btn-icon-split mb-4" aria-label="{{ back_url_button_title }}">
+  <span class="icon text-white-50">
+    <i class="fas fa-arrow-left"></i>
+  </span>
+  <span class="text"> {{ back_url_button_title }}</span>
+</a>
+
+{% for comment_content in comment.content_history %}
+  <div class="card mb-4">
+    <div class="card-header">
+      {% if not comment_content.author %}
+        <h6 class="m-0 font-weight-bold" style="color: #c0392b;">AUTO GENERATED COMMENT</h6>
+      {% endif %}
+      <h6 class="m-0 font-weight-bold text-primary">Comment type: {{ comment.type }}</h6>
+      {% if comment.measurement %}
+        <h6 class="m-0 font-weight-bold text-primary">Refers Measurement ID: {{ comment.measurement.measurement_id }} </h6>
+      {% endif %}
+      <h6 class="m-0 font-weight-bold text-primary">Comment ID: {{ comment.comment_id }} - Content version: {{ comment_content.version }}</h6>
+      <h6 class="m-0 font-weight-bold text-primary">Content ID: {{ comment_content.comment_content_id }}</h6>
+      {% if not comment_content.author %}
+        <h6 class="m-0 font-weight-bold text-primary">Auto generated - {{ comment_content.timestamp }}</h6>
+      {% else %}
+        {% if not comment_content.text %}
+          <h6 class="m-0 font-weight-bold text-primary">Deleted by {{ comment_content.author }} - {{ comment_content.timestamp }}</h6>
+        {% else %}
+          <h6 class="m-0 font-weight-bold text-primary">Edited by {{ comment_content.author }} - {{ comment_content.timestamp }}</h6>
+        {% endif %}
+      {% endif %}
+    </div>
+    <div class="card-body table-responsive">
+      <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+        <thead>
+          <tr>
+            <th>Text</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="white-space: pre-wrap;">{{ comment_content.text }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endfor %}
+
+{% endblock %}

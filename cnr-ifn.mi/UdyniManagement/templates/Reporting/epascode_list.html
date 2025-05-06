@@ -1,0 +1,128 @@
+{% extends "UdyniManagement/page.html" %}
+{% load page_tags %}
+{% block content %}
+
+{% if perms.Reporting.epas_manage %}
+<a href="{% url 'epas_import' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Update codes">
+  <span class="icon text-white-50">
+      <i class="fas fa-file-import"></i>
+  </span>
+  <span class="text">Update codes</span>
+</a>
+{% endif %}
+
+{% if perms.Reporting.epas_manage %}
+<form id="code_update_form">
+  {% csrf_token %}
+{% endif %}
+  <div class="card mb-4">
+    <div class="card-body table-responsive">
+      <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+        <thead>
+          <tr>
+            <th>EPAS code</th>
+            <th>Description</th>
+            <th>TS Code</th>
+          </tr>
+        <thead>
+        <tbody>
+          {% for code in page_obj %}
+            <tr>
+              <td>{{ code.code }}</td>
+              <td>{{ code.description | escape }}</td>
+              <td>
+                {% if perms.Reporting.epas_manage %}
+                  <select class="form-control input-sm" name="ts_{{ code.id }}">
+                      {% for tag, label in choices %}
+                          {{ tag }}
+                          {% if tag == code.ts_code %}
+                              <option value="{{ tag }}" selected="selected">{{ label }}</option>
+                          {% else %}
+                              <option value="{{ tag }}">{{ label }}</option>
+                          {% endif %}
+                      {% endfor %}
+                  </select>
+                {% else %}
+                  {{ code.get_ts_code_display }}
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% if perms.Reporting.epas_manage %}
+      <div class="mb-4">
+        <button type="submit" class="btn btn-primary btn-icon-split" aria-label="Save">
+          <span class="icon text-white-50">
+            <i class="fas fa-floppy-disk"></i>
+          </span>
+          <span class="text">Save</span>
+        </button>
+      </div>
+      {% endif %}
+
+      <div class="d-flex justify-content-center">
+        <nav aria-label="Page navigation" class="text-center">
+          <ul class="pagination">
+
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous"><i class="fas fa-chevron-left" aria-hidden="true"></i></a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+              <a class="page-link" href="" aria-label="Previous"><i class="fas fa-chevron-left" aria-hidden="true"></i></a>
+            </li>
+            {% endif %}
+
+            {% elided_page_range paginator page_obj.number as page_range %}
+            {% for p in page_range %}
+              {% if p == page_obj.number %}
+              <li class="page-item active">
+                <a class="page-link" href="?page={{ p }}" aria-label="{{ p }}">{{ p }}</a>
+              </li>
+              {% elif p == '…' %}
+              <li class="page-item disabled"><a class="page-link" href="" aria-label="{{ p }}">{{ p }}</a></li>
+              {% else %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ p }}" aria-label="{{ p }}">{{ p }}</a>
+              </li>
+              {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next"><i class="fas fa-chevron-right" aria-hidden="true"></i></a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+              <a class="page-link" href="" aria-label="Next"><i class="fas fa-chevron-right" aria-hidden="true"></i></a>
+            </li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+{% if perms.Reporting.epas_manage %}
+</form>
+{% endif %}
+
+
+{% endblock %}
+
+{% block page-javascript %}
+
+{% if perms.Reporting.epas_manage %}
+<script>
+$( function() {
+  $( "#code_update_form" ).on( "submit", function( event ) {
+    event.preventDefault();
+    $.post('{% url 'epas_update' %}', $(this).serialize())
+  } );
+} );
+</script>
+{% endif %}
+
+{% endblock %}

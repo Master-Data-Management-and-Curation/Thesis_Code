@@ -1,0 +1,85 @@
+{% extends "UdyniManagement/page.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="card mb-4">
+  <div class="card-body">
+
+    {% if deleted %}
+
+      
+      <!-- The button for replying to a deleted comment is not shown in logbook view, this is just in case the link is accessed -->
+      <div class="alert alert-warning" role="alert">
+        This comment has been deleted from the logbook, it cannot be replied to.
+      </div>
+
+      <a href="{{ back_url }}" aria-label="Cancel" class="btn btn-danger btn-icon-split">
+        <span class="icon text-white-50">
+          <i class="fas fa-xmark"></i>
+        </span>
+        <span class="text">Cancel</span>
+      </a>
+    
+    {% else %}
+
+      <form action="" method="post"{% if enctype %} enctype="{{ enctype }}"{% endif %}>
+      {% csrf_token %}
+        <div>
+          <!-- Show on screen the comment the user is replying to -->
+          <div class="card mb-4">
+            <div class="card-header">
+              {% if not comment_content_to_reply.author %}
+                <h6 class="m-0 font-weight-bold" style="color: #c0392b;">AUTO GENERATED COMMENT</h6>
+              {% endif %}
+              <h6 class="m-0 font-weight-bold text-primary">Comment type: {{ comment_to_reply.type }}</h6>
+              {% if comment_to_reply.measurement %}
+                <h6 class="m-0 font-weight-bold text-primary">Refers Measurement ID: {{ comment_to_reply.measurement.measurement_id }} </h6>
+              {% endif %}
+              <h6 class="m-0 font-weight-bold text-primary">Comment ID: {{ comment_to_reply.comment_id }} - Content version: {{ comment_content_to_reply.version }}</h6>
+              <h6 class="m-0 font-weight-bold text-primary">Content ID: {{ comment_content_to_reply.comment_content_id }}</h6>
+              {% if not comment_content_to_reply.author %}
+                <h6 class="m-0 font-weight-bold text-primary">Auto generated - {{ comment_content_to_reply.timestamp }}</h6>
+              {% else %}
+                <h6 class="m-0 font-weight-bold text-primary">Last edited by {{ comment_content_to_reply.author }} - {{ comment_content_to_reply.timestamp }}</h6>
+              {% endif %}
+            </div>
+            <div class="card-body table-responsive">
+              <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+                <thead>
+                  <tr>
+                    <th>Text</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="white-space: pre-wrap;">{{ comment_content_to_reply.text }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Here we could add a form for the attachments in the future -->
+          <!-- Forms for inserting the reply -->
+          {{ comment_form|crispy }}
+          {{ comment_content_form|crispy }}
+          <button type="submit" class="btn btn-success btn-icon-split" aria-label="Save">
+            <span class="icon text-white-50">
+              <i class="fas fa-floppy-disk"></i>
+            </span>
+            <span class="text">Save</span>
+          </button>
+          <a href="{{ back_url }}" aria-label="Cancel" class="btn btn-danger btn-icon-split">
+            <span class="icon text-white-50">
+              <i class="fas fa-xmark"></i>
+            </span>
+            <span class="text">Cancel</span>
+          </a>
+        </div>
+      </form>
+
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

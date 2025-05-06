@@ -1,0 +1,37 @@
+{% extends "UdyniManagement/index.html" %}
+
+{% block page %}
+
+<div class="container">
+
+  <!-- Outer Row -->
+  <div class="row justify-content-center">
+    <div class="col-md-9">
+      <div class="card o-hidden border-0 shadow-lg my-5">
+        <div class="card-body p-0">
+          <!-- Nested Row within Card Body -->
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="p-5">
+                <div class="text-center">
+                  <h1 class="h4 text-gray-900 mb-4">Registration complete</h1>
+                </div>
+                <div class="text-justify">
+                  You registration request has been saved. You will receive shortly a confirmation email.
+                  Please follow the link contained within to verify your email address and submit you request
+                  for approval by the administrators.
+                </div>
+                <hr>
+                <div class="text-center small">
+                  Already registered? Login <a href="{% url 'account_login' %}">here</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

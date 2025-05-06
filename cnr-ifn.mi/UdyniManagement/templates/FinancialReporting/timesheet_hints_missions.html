@@ -1,0 +1,143 @@
+{% extends "UdyniManagement/page.html" %}
+{% load tr_month %}
+{% load generic %}
+
+{% block content %}
+<a href="{% url 'timesheets_view' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Back">
+  <span class="icon text-white-50">
+      <i class="fas fa-circle-arrow-left"></i>
+  </span>
+  <span class="text">Back</span>
+</a>
+
+
+{% if error_message %}
+<div class="card border-left-danger">
+  <div class="card-body" role="alert">
+    {{ error_message }}
+  </div>
+</div>
+{% endif %}
+
+<form action="" method="post">
+  {% csrf_token %}
+
+  {% for month, data_by_month in data %}
+    <div class="card mb-2">
+      <div class="card-header">
+        <h6 class="m-0 font-weight-bold text-primary">{{ month | month_num2en }}</h6>
+      </div>
+      <div class="card-body table-responsive">
+        <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+          <colgroup>
+            <col class="col-md-2" />
+            {% for p in periods %}
+              <col class="" />
+            {% endfor %}
+          </colgroup>
+          <thead>
+            <th>Date</th>
+            {% for p in periods %}
+              <th class="period-header">
+                <input class="form-check-input" type="checkbox" id="{{ month }}_{{ p.pk }}" />
+                {{ p.project.name }}{% if p.wp %} {{ p.wp.name }}{% endif %}
+              </th>
+            {% endfor %}
+          </thead>
+          <tbody>
+            {% for day, data_by_day in data_by_month %}
+              <tr>
+                <td class="col">{{ month | month_num2en }} {{ day }}<sup>{{ day | ordinal}}</sup></td>
+                {% for check in data_by_day %}
+                  <td>
+                    {% if check %}
+                      <input class="form-check-input" type="checkbox" id="{{ month }}_{{ check.pid }}_{{ day }}" name="{{ month }}_{{ check.pid }}_{{ day }}" {% if check.checked %}checked="checked" {% endif %}/>
+                    {% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endfor %}
+  <div class="mb-4">
+    <button type="submit" class="btn btn-primary btn-icon-split" aria-label="Continue">
+      <span class="icon text-white-50">
+        <i class="fas fa-floppy-disk"></i>
+      </span>
+      <span class="text">Continue</span>
+    </button>
+  </div>
+</form>
+
+{% endblock %}
+
+{% block page-javascript %}
+
+<script type="text/javascript">
+
+function uncheck_line(id) {
+  m = id.match(/^(\d+)_(\d+)_(\d+)$/);
+  if(m == null)
+    return;
+  $("input:checkbox[id^='" + m[1] + "_']").each(function() {
+    var re = new RegExp("^" + m[1] + "_\\d+_" + m[3] + "$", 'g');
+    if($(this).prop('id') != id && $(this).prop('id').match(re) != null) {
+      $(this).prop('checked', false);
+    }
+  });
+}
+
+function uncheck_header(id) {
+  m = id.match(/^(\d+)_(\d+)_(\d+)$/);
+  if(m == null)
+    return;
+  $("#" + m[1] + "_" + m[3]).prop('checked', false);
+}
+
+$(document).ready(function() {
+  $("input:checkbox").change(function() {
+    // Check checkbox ID
+    m = $(this).prop('id').match(/^(\d+)_(\d+)_(\d+)$/);
+
+    if(m != null) {
+      // Single day cell. Should check that all the other cells on the line are not selected
+      if($(this).prop('checked')) {
+        uncheck_line($(this).prop('id'));
+      } else {
+        uncheck_header($(this).prop('id'));
+      }
+    } else {
+      m = $(this).prop('id').match(/^(\d+)_(\d+)$/);
+      if(m != null) {
+        // Month cell
+        if($(this).prop('checked')) {
+          // Select all cells with id starting with month and pid
+          $("input:checkbox[id^='" + m[1] + "_" + m[2] + "_']").each(function() {
+            $(this).prop('checked', true);
+            uncheck_line($(this).prop('id'));
+          });
+          // Select all the headers and unselect all the others
+          $("input:checkbox[id^='" + m[1] + "_']").each(function() {
+            var re = RegExp("^" + m[1] + "_(\\d+)$");
+            n = $(this).prop('id').match(re);
+            if(n != null && n[1] != m[2]) {
+              $(this).prop('checked', false);
+            }
+          });
+        } else {
+          // Select all cells with id starting with month and pid
+          $("input:checkbox[id^='" + m[1] + "_" + m[2] + "_']").each(function() {
+            $(this).prop('checked', false);
+          });
+        }
+      }
+    }
+  });
+});
+
+</script>
+
+{% endblock %}

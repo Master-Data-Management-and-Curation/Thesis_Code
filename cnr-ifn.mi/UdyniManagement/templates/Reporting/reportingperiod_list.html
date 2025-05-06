@@ -1,0 +1,49 @@
+{% extends "UdyniManagement/page.html" %}
+{% load euro %}
+{% block content %}
+
+<a href="{% url 'reporting_add' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Add reporting period">
+  <span class="icon text-white-50">
+    <i class="fas fa-circle-plus"></i>
+  </span>
+  <span class="text">Add reporting period</span>
+</a>
+
+{% regroup object_list by project_name as project_list %}
+
+{% for project in project_list %}
+  <div class="card shadow mb-4">
+    <div class="card-header">
+      <div class="d-flex flex-row">
+        <h6 class="m-0 font-weight-bold text-primary">{{ project.grouper }}</h6>
+      </div>
+    </div>
+    <div class="card-body table-responsive">
+      <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+        <thead>
+          <tr>
+            <th>Period start</th>
+            <th>Period end</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for period in project.list %}
+            <tr>
+              <td>{{ period.rp_start }}</td>
+              <td>{{ period.rp_end }}</td>
+              <td class="col-actions">
+                {% if perms.Reporting.reporting_manage_own and period.is_own or perms.Reporting.reporting_manage %}
+                  <a href="{% url 'reporting_mod' pk=period.pk %}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+                  <a href="{% url 'reporting_del' pk=period.pk %}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endfor %}
+
+{% endblock %}

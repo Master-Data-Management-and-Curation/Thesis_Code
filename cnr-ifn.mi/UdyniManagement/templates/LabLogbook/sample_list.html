@@ -1,0 +1,55 @@
+{% extends "UdyniManagement/page.html" %}
+{% block content %}
+
+{% if can_edit %}
+  <a href="{% url 'sample_add' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Add sample">
+    <span class="icon text-white-50">
+        <i class="fas fa-circle-plus"></i>
+    </span>
+    <span class="text">Add sample</span>
+  </a>
+{% endif %}
+
+{% if object_list %}
+  <div class="card mb-4">
+    <div class="card-body table-responsive">
+      <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+        <thead>
+          <tr>
+            <th>Sample ID</th>
+            <th>Name</th>
+            <th>Material</th>
+            <th>Substrate</th>
+            <th>Manufacturer</th>
+            <th>Description</th>
+            <th>Reference</th>
+            <th>Author</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sample in object_list %}
+            <tr>
+              <td>{{ sample.sample_id }}</td>
+              <td>{{ sample.name }}</td>
+              <td>{{ sample.material }}</td>
+              <td>{{ sample.substrate }}</td>
+              <td>{{ sample.manufacturer }}</td>
+              <td>{{ sample.description }}</td>
+              <td>{{ sample.reference }}</td>
+              <td>{{ sample.author }}</td>
+              <td class="col-actions">
+                {% if can_edit %}
+                  <a href="{% url 'sample_mod' pk=sample.sample_id %}" aria-label="Modify"><i class="fas fa-pencil" aria-hidden="true"></i></a>
+                  <a href="{% url 'sample_del' pk=sample.sample_id %}" aria-label="Delete"><i class="fas fa-trash-can" aria-hidden="true"></i></a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

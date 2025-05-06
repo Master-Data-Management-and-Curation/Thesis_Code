@@ -1,0 +1,43 @@
+{% extends "UdyniManagement/page.html" %}
+{% block content %}
+
+<div class="card mb-4">
+  <div class="card-body table-responsive">
+    <table class="table table-sm table-hover">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Surname</th>
+          <th>Email</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for req in object_list %}
+          <tr>
+            <td>{{ req.name }}</td>
+            <td>{{ req.surname }}</td>
+            <td>{{ req.email }}</td>
+            <td>{{ req.get_status_display }}</td>
+            <td>
+              {% if req.status == 'V' %}
+                <a href="{% url 'account_registration_accept' pk=req.pk %}" aria-label="Accept" class="ml-1">
+                  <span class="text-success"><i class="fa-solid fa-check" aria-hidden="true"></i></span>
+                </a>
+                <a href="{% url 'account_registration_reject' pk=req.pk %}" aria-label="Reject" class="ml-1">
+                  <span class="text-danger"><i class="fa-solid fa-xmark" aria-hidden="true"></i></span>
+                </a>
+              {% endif %}
+              <a href="{% url 'account_registration_delete' pk=req.pk %}" aria-label="Delete" class="ml-1">
+                <span class="text-primary"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></span>
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

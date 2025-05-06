@@ -1,0 +1,39 @@
+{% for heading in menu %}
+
+  <!-- Divider -->
+  <hr class="sidebar-divider">
+  <!-- Heading -->
+  <div class="sidebar-heading">{{ heading.name }}</div>
+
+  {% for section in heading.sections %}
+    <li class="nav-item{% if section.active %} active{% endif %}">
+      {% if section.subsections %}
+        <a class="nav-link{% if not section.active %} collapsed{% endif %}" href="#" data-toggle="collapse" data-target="#collapse_{{ section.id }}" aria-expanded="true" aria-controls="collapse_{{ section.id }}">
+          {% if section.icon %}
+            <i class="fa-fw {{ section.icon }}"></i>
+          {% else %}
+            <i class="fa-fw fa-solid fa-puzzle-piece"></i>
+          {% endif %}
+          <span>{{ section.name }}</span>
+        </a>
+        <div id="collapse_{{ section.id }}" class="collapse{% if section.active %} show{% endif %}" aria-labelledby="heading_{{ section.id }}" data-parent="#accordionSidebar">
+          <div class="bg-white py-2 collapse-inner rounded">
+            <h6 id="heading_{{ section.id }}" class="collapse-header">{{ section.name }}</h6>
+            {% for subsection in section.subsections %}
+              <a class="collapse-item{% if subsection.active %} active{% endif %}" href="{{ subsection.link }}">{{ subsection.name }}</a>
+            {% endfor %}
+          </div>
+        </div>
+      {% else %}
+        <a class="nav-link" href="{{ section.link }}"{% if section.target %} target="{{ section.target }}"{% endif %}>
+          {% if section.icon %}
+            <i class="fa-fw {{ section.icon }}"></i>
+          {% else %}
+            <i class="fa-fw fa-solid fa-puzzle-piece"></i>
+          {% endif %}
+          <span>{{ section.name }}</span>
+        </a>
+      {% endif %}
+    </li>
+  {% endfor %}
+{% endfor %}

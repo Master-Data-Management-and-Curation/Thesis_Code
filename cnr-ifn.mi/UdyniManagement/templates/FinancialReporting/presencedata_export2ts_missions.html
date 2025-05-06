@@ -1,0 +1,130 @@
+{% extends "UdyniManagement/page.html" %}
+{% load tr_month %}
+{% load generic %}
+
+{% block content %}
+
+<a href="{% url 'presencedata_view' %}" class="btn btn-primary btn-icon-split mb-4" aria-label="Back">
+  <span class="icon text-white-50">
+      <i class="fas fa-circle-arrow-left"></i>
+  </span>
+  <span class="text">Back</span>
+</a>
+
+<form action="" method="post" id="import_form">
+{% csrf_token %}
+
+<div class="card mb-4 border-left-primary">
+  <div class="card-body table-responsive">
+    Total hours: {{ total_hours | floatformat:-1 }}<br />
+    Nominal working hours: {{ working_hours | floatformat:-1 }}<br />
+    Missing hours: {{ missing_hours | floatformat:-1 }}<br />
+    Minimum mission days to report: {{ missions2report }}<br />
+    Missions reported: <span id="missions_reported">0</span>
+  </div>
+</div>
+
+{% for month, data in data_by_month.items %}
+  {% if data.missions.all %}
+    <div class="card mb-2">
+      <div class="card-header">
+        <h6 class="m-0 font-weight-bold text-primary">{{ month | month_num2en }}</h6>
+      </div>
+      <div class="card-body table-responsive">
+        <p>
+          <input type="checkbox" class="checkboxinput" name="rep_{{ month }}_all" id="rep_{{ month }}_all" />
+          Total hours: {{ data.tot_hours | floatformat:-1 }} -
+          Suggested hours: {{ data.working_hours | floatformat:-1 }} -
+          {% if data.missions.all %}
+            Suggested minimum missions to report: {{ data.missions2report }}
+          {% endif %}
+        </p>
+
+        <table cellspacing="0" cellpadding="0" class="table table-sm table-hover reporting">
+          <thead>
+            <tr>
+              <th>Report</th>
+              <th>Date</th>
+              <th>Day of the week</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in data.missions %}
+              <tr>
+                <td><input type="checkbox" class="checkboxinput" selected="" name="rep_{{ m.day | date:'m' }}_{{ m.day | date:'d' }}" /></td>
+                <td>{{ m.day }}</td>
+                <td>{{ m.day | date:'l' }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+{% endfor %}
+
+<div class="d-flex flex-row mb-4">
+  <button type="submit" class="btn btn-primary btn-icon-split mb-4">
+    <span class="icon text-white-50">
+        <i class="fas fa-circle-arrow-right"></i>
+    </span>
+    <span class="text">Continue</span>
+  </button>
+</div>
+</form>
+
+
+<div id="import_dialog" title="Processing in progress">
+    <p>Please wait ...</p>
+</div>
+
+{% endblock %}
+
+{% block page-javascript %}
+
+<script>
+$('#import_dialog').dialog({
+  hide: 'slide',
+  show: 'slide',
+  autoOpen: false,
+});
+
+function pad(num, size) {
+  num = num.toString();
+  while (num.length < size) num = "0" + num;
+  return num;
+}
+
+$("input:checkbox").change(function() {
+  m = $(this).prop('id').match(/rep_(\d+)_all/);
+  if (m != null) {
+    month = parseInt(m[1])
+    if($(this).prop('checked')) {
+      $("input[name^='rep_"+pad(month, 2)+"']").each(function() {
+        $(this).prop('checked', true);
+      });
+    } else {
+      $("input[name^='rep_"+pad(month, 2)+"']").each(function() {
+        $(this).prop('checked', false);
+      });
+    }
+  }
+  // Count all checked boxes
+  count = 0;
+  $("input[name^='rep_']").each(function() {
+    m = $(this).prop('name').match(/rep_\d+_\d+/);
+    if(m != null && $(this).prop('checked')) {
+      count++;
+    }
+  });
+  $("#missions_reported").html(count.toString());
+});
+
+$(document).ready(function() {
+  $('#import_form').submit(function() {
+    $('#import_dialog').dialog('open');
+  });
+});
+</script>
+
+{% endblock %}

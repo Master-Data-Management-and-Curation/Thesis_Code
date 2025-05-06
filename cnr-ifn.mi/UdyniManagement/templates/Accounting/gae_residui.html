@@ -1,0 +1,132 @@
+{% extends "UdyniManagement/page.html" %}
+{% block content %}
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex flex-row">
+      <div class="mb-4 flex-fill">
+        <select id="gae_select" class="select form-control">
+          <option value="">-------</option>
+          {% for g in gae %}
+            <option value="{{ g.name }}">{{ g.name }} [{{ g.project }}]: {{ g.desc }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="spinner-border d-none ml-2" role="status" id="loading_spinner">
+        <span class="sr-only">Loading...</span>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table cellspacing="0" cellpadding="0" class="table table-sm table-hover">
+        <thead>
+          <tr>
+            <th>Voce</th>
+            <th>Competenza</th>
+            <th>Residui</th>
+          </tr>
+        <thead>
+        <tbody id="funds_table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block page-javascript %}
+
+<script>
+
+  function euro(value) {
+    s_val = value.toFixed(2);
+
+    while(true) {
+      s_new = s_val.replace(/(\-?\d+)(\d{3})/, "$1'$2");
+      if(s_new != s_val) {
+        s_val = s_new;
+      } else {
+        break;
+      }
+    }
+    return "&euro; " + s_val.replace(".", ",");
+  }
+
+  function render_funds_table(competenza, residui) {
+    funds = [];
+
+    // Reorder competenza
+    for (const [key, value] of Object.entries(competenza)) {
+      if(!(key in funds)) {
+        funds[key] = [];
+        funds[key]['desc'] = value['descrizione'];
+        funds[key]['residui'] = 0.0;
+      }
+      funds[key]['competenza'] = value['residuo'];
+    }
+
+    // Reorder residui
+    for (const [key, value] of Object.entries(residui)) {
+      if(!(key in funds)) {
+        funds[key] = [];
+        funds[key]['desc'] = value['descrizione'];
+        funds[key]['competenza'] = 0.0;
+      }
+      funds[key]['residui'] = 0.0;
+      for (const year in value['esercizi']) {
+        funds[key]['residui'] += value['esercizi'][year]['residuo'];
+      }
+    }
+    // Build table
+    root = $("#funds_table");
+    root.html("");
+    var tot_c = 0.0;
+    var tot_r = 0.0;
+    for(const voce in funds) {
+      if(funds[voce]['competenza'] > 0 || funds[voce]['residui'] > 0) {
+        line = $("<tr></tr>").appendTo(root);
+        $("<td>" + voce + ": " + funds[voce]['desc'] + "</td>").appendTo(line);
+        $("<td>" + euro(funds[voce]['competenza']) + "</td>").appendTo(line);
+        $("<td>" + euro(funds[voce]['residui']) + "</td>").appendTo(line);
+        tot_c += funds[voce]['competenza'];
+        tot_r += funds[voce]['residui'];
+      }
+    }
+    line = $("<tr></tr>").appendTo(root);
+    $("<td><b>Totale</b></td>").appendTo(line);
+    $("<td><b>" + euro(tot_c) + "</b></td>").appendTo(line);
+    $("<td><b>" + euro(tot_r) + "</b></td>").appendTo(line);
+  }
+
+  $(document).ready(function() {
+    $("#gae_select").change(function() {
+      // GAE
+      gae = $(this).val();
+      if(gae == "") {
+        return;
+      }
+
+      // Get GAE funds (competenza)
+      let url_c = "{% url 'sigla_gae_competenza' gae='GAE_PH' %}";
+      $("#loading_spinner").removeClass('d-none');
+      $.get(url_c.replace("GAE_PH", gae), function(data) {
+        if(!data['error']) {
+          var competenza = data['elements'];
+
+          // Get GAE funds (residui)
+          // NOTE: calls cannot be parallel as SIGLA only allow one request
+          let url_r = "{% url 'sigla_gae_residui' gae='GAE_PH' %}";
+          $.get(url_r.replace("GAE_PH", gae), function(data) {
+            if(!data['error']) {
+              var residui = data['elements'];
+              $("#loading_spinner").addClass('d-none');
+              render_funds_table(competenza, residui);
+            }
+          });
+        }
+      });
+    });
+  });
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "UdyniManagement/generic_form.html" %}
+{% block page-javascript %}
+
+<script type="text/javascript">
+  var gae = [];
+
+  function populate_gae(project_id) {
+    $('#id_sigla_gae').find('option').remove().end().append('<option value="">None</option>');
+    $.get("{% url 'project_view' %}"+project_id+"/gae", function(data) {
+      if(!data['error']) {
+        gae = [];
+        for (const [key, value] of Object.entries(data['elements'])) {
+          gae[key] = value;
+          $('#id_sigla_gae').append(`<option value="${key}">${key}: ${value}</option>`);
+        }
+      }
+    });
+  }
+
+  $(document).ready(function() {
+    if($('#id_project').val() != 0) {
+      populate_gae($('#id_project').val());
+    }
+
+    $('#id_project').change(function() {
+      populate_gae($(this).val());
+    });
+
+    $('#id_sigla_gae').change(function() {
+      value = $(this).val();
+      $('#id_name').val(value);
+      $('#id_description').val(gae[value]);
+    });
+  });
+</script>
+
+{% endblock %}
