@@ -6,7 +6,6 @@ This folder contains two files:
 - `NeXus_converter_for_MODA_XPS.py`: the main Python script to convert XPS `.vms` data files into NeXus `.nxs` format using metadata.
 - `MODA_config.json`: the configuration file used to define the structure of the output NeXus file.
 
-These files were developed at the MODA Laboratory (CNR-SPIN, Napoli) and are shared here for students attending the data management course.
 
 ---
 
