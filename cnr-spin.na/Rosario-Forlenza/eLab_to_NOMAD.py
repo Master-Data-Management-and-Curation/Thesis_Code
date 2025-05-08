@@ -1,487 +1,259 @@
-from typing import TYPE_CHECKING
-import numpy as np
-import plotly.graph_objects as go
-import pandas as pd
-from nomad.datamodel.data import ArchiveSection, EntryData
-from nomad.metainfo import (
-    MEnum, 
-    Package,
-    Quantity,
-    Section,
-    SubSection,
-    Datetime
-)
-from nomad.datamodel.metainfo.annotations import ELNAnnotation
-from nomad.datamodel.metainfo.plot import PlotSection, PlotlyFigure
-from fabrication_facilities.schema_packages.fabrication_utilities import FabricationProcessStep
-import os 
+import json
+import csv
+import glob
+import os
+import zipfile
+import io
+import subprocess
+from datetime import datetime
 
-from plotly.subplots import make_subplots
-import plotly.express as px
+# Field mapping from eLab JSON to NOMAD schema
+FIELD_MAPPING = {
+    "Chamber": "room",
+    "Sample": "id_item_processed",
+    "Target": "target_material",
+    "Thickness": "thickness_measured",
+    "Target 2": "target_material_2",
+    "Thickness 2": "thickness_measured_2",
+    "Buffer gas": "buffer_gas",
+    "Process pressure ": "chamber_pressure",
+    "Heater temperature": "temperature_target",
+    "Heater-target distance": "heater_target_distance",
+    "Repetition rate": "repetition_rate",
+    "Laser Fluence": "exposure_intensity"
+}
 
-if TYPE_CHECKING:
-    from nomad.datamodel.datamodel import EntryArchive
-    from structlog.stdlib import BoundLogger
-
-m_package = Package(name='MODA-LAB instruments Schema')
-
-class RHEEDImage(ArchiveSection):
+def extract_and_map_data(input_json, pid=None, affiliation=None):
     """
-   Section for inserting RHEED images
+    This function extracts and transforms data from the original JSON to fit the NOMAD schema.
+    Handles simple fields, cross-references and file attachments.
+    Accepts optional PID and affiliation parameters.
     """
-    m_def = Section(
-        a_eln={
-            'hide': ['lab_id', 'name'],
-            'properties':{
-                'order': [
-                    'image_name',
-                    'image_description',
-                    'image_file'
-                ]
-            }
-        }
-    )
+    item = input_json["data"][0]
+    metadata_fields = item["metadata_decoded"]["extra_fields"]
+    item_links = item.get("items_links", [])
 
-    image_name = Quantity(
-        type=str,
-        description='RHEED image name',
-        a_eln={'component': 'StringEditQuantity'}
-    )
+    # Map element IDs to their titles
+    entity_map = {i["entityid"]: i["title"] for i in item_links}
+
+    mapped_data = {
+        "m_def": "nomad_plugin_pld_moda.schema_packages.pld_schema.PLDProcess"
+    }
+
+    # Mapping of main fields
+    for json_key, archive_key in FIELD_MAPPING.items():
+        field = metadata_fields.get(json_key, {})
+        
+        # Managing references to other elements
+        if field.get("type") == "items" and isinstance(field.get("value"), int):
+            entity_id = field["value"]
+            title = entity_map.get(entity_id)
+            if title:
+                mapped_data[archive_key] = title
+        else:
+            # Numeric value conversion and string cleanup
+            value = field.get("value", "").strip()
+            if value:
+                try:
+                    num_value = float(value)
+                    mapped_data[archive_key] = int(num_value) if num_value.is_integer() else num_value
+                except ValueError:
+                    mapped_data[archive_key] = value
+
+    # Added interactive fields for pid and affiliation
+    if pid is not None:
+        mapped_data["id_proposal"] = pid
+    if affiliation is not None:
+        mapped_data["affiliation"] = affiliation
+
+    # Add operator and datetime entries after exposure_intensity
+    changelog = item.get("changelog", [])
+    operator = ""
+    datetime_str = ""
     
-    image_description = Quantity(
-        type=str,
-        description='RHEED image description',
-        a_eln={'component': 'StringEditQuantity'}
+    if changelog:
+        first_change = changelog[0]
+        operator = first_change.get("fullname", "")
+        created_at = first_change.get("created_at", "")
+        try:
+            dt = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
+            datetime_str = dt.strftime("%d/%m/%Y %H:%M")
+        except (ValueError, TypeError):
+            datetime_str = created_at  # Keep original format in case of error
+
+    mapped_data["operator"] = operator
+    mapped_data["datetime"] = datetime_str
+    mapped_data["notes"] = item.get("body", "").strip()  # Adding notes from the body field of the json file exported from eLab
+
+    # RHEED Image Management
+    rheed_images = [
+        {"image_name": f"Immagine {i+1}", "image_file": upload["real_name"]}
+        for i, upload in enumerate(item.get("uploads", []))
+        if upload.get("real_name", "").lower().endswith(".png")
+    ]
+
+    if rheed_images:
+        mapped_data["rheed_data_images"] = rheed_images
+
+    # RHEED data file detection
+    has_rheed_txt = any(
+        upload.get("real_name", "").startswith("Real-time-Region-Analysis-Peak") 
+        and upload.get("real_name", "").lower().endswith(".txt")
+        for upload in item.get("uploads", [])
     )
-    
-    image_file = Quantity(
-        type=str,
-        description='Path or upload RHEED image',
-        a_eln={
-            'component': 'FileEditQuantity',
-            'label': 'Upload Image'
+
+    if has_rheed_txt:
+        mapped_data["rheed_intensity_plot"] = {
+            "data_file": "RHEED_measurements.csv"
         }
-    )
 
+    return {"data": mapped_data}
 
-class RHEEDIntensityPlot(PlotSection, EntryData):
+def convert_rheed_txt_to_csv():
     """
-    Class to visualize RHEED intensity over time for different diffraction orders.
-    Optimized for large datasets (tens of thousands of points).
+    Converts RHEED data TXT file to CSV format while keeping it in memory.
+    Returns CSV data as a string or None if no file is found.
     """
-    m_def = Section()
+    matching_files = glob.glob("*Real-time-Region-Analysis-Peak*.txt")
+    if not matching_files:
+        print("No RHEED TXT files found.")
+        return None
+    
+    input_file = matching_files[0]
+    
+    # In-memory CSV creation
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["time", "intensity_11", "intensity_00", "intensity_1m1"])
+    
+    with open(input_file, "r") as infile:
+        reader = csv.reader(infile, delimiter="\t")
+        for row in reader:
+            writer.writerow(row)
+    
+    csv_data = output.getvalue()
+    output.close()
+    
+    print(f"File '{input_file}' converted to CSV data in memory.")
+    return csv_data
 
-    data_file = Quantity(
-        type=str,
-        a_eln=ELNAnnotation(
-            component='FileEditQuantity',
-            defaultValue='',
-            props=dict(
-                fileTypes=['csv', 'txt'],
-                placeholder='Upload the CSV file with RHEED data'
-            )
-        )
-    )
+def create_zip(entry_name, json_data, csv_data):
+    """
+    Create the ZIP archive containing:
+    - The main ARCHIVE.JSON file
+    - The RHEED data CSV file (if present)
+    - All PNG images in the current folder
+    """
+    zip_filename = f"{entry_name}.zip"
+    png_files = glob.glob("*.png")
+    png_count = len(png_files)
+    
+    with zipfile.ZipFile(zip_filename, 'w') as zipf:
+        # Adding JSON to ZIP
+        zipf.writestr(f"{entry_name}.archive.json", json_data)
+        
+        # Add CSV if available
+        if csv_data:
+            zipf.writestr("RHEED_measurements.csv", csv_data)
+        
+        # Add PNG images                                    
+        for png_file in png_files:
+            if os.path.exists(png_file):
+                zipf.write(png_file)
+    
+    # Print summary of zip file contents
+    print(f"\nComplete archive created: {zip_filename}")
+    print("Content:")
+    print(f"- {entry_name}.archive.json")
+    if csv_data:
+        print("- RHEED_measurements.csv")
+    print(f"- {png_count} PNG images" if png_count > 0 else "- no PNG images")
+    
+    return zip_filename
 
-    time = Quantity(
-        type=float,
-        shape=["*"],
-        a_eln={
-            'component': 'NumberEditQuantity',
-            'defaultDisplayUnit': 's'
-        },
-        unit="s",
-        description="Acquisition time",
-    )
-
-    intensity_11 = Quantity(
-        type=float,
-        shape=["*"],
-        a_eln={
-            'component': 'NumberEditQuantity',
-            'defaultDisplayUnit': 'J/(cm**2*s)',
-            'label': 'Intensity (1,1)'  # <--- Nome visualizzato nell'UI
-        },
-        unit="J/(cm**2*s)",
-        description="Intensity of the maximum of order (1,1)",
-    )
-
-    intensity_00 = Quantity(
-        type=float,
-        shape=["*"],
-        a_eln={
-            'component': 'NumberEditQuantity',
-            'defaultDisplayUnit': 'J/(cm**2*s)',
-            'label': 'Intensity (0,0)'  # <--- Nome visualizzato nell'UI
-        },
-        unit="J/(cm**2*s)",
-        description="Intensity of the maximum of order (0,0)",
-    )
-
-    intensity_1m1 = Quantity(
-        type=float,
-        shape=["*"],
-        a_eln={
-            'component': 'NumberEditQuantity',
-            'defaultDisplayUnit': 'J/(cm**2*s)',
-            'label': 'Intensity (1,-1)'  # <--- Nome visualizzato nell'UI
-        },
-        unit="J/(cm**2*s)",
-        description="Intensity of the maximum of order (1,-1)",
-    )
-
-    def normalize(self, archive, logger):
-        super().normalize(archive, logger)
-        """
-        Optimized method to load and process large datasets from the CSV file.
-        """
-        if self.data_file:
-            try:
-                # Get the absolute path of the file
-                
-                raw_dir = archive.m_context.raw_path()
-                raw_file_path = os.path.join(raw_dir, self.data_file)
-                
-                df = pd.read_csv(
-                    raw_file_path,
-                    dtype={
-                        'time': float,
-                        'intensity_11': float,
-                        'intensity_00': float,
-                        'intensity_1m1': float
-                    },
-                    engine='c',
-                    memory_map=True
-                )
-                
-                required_columns = ['time', 'intensity_11', 'intensity_00', 'intensity_1m1']
-                if not all(col in df.columns for col in required_columns):
-                    missing = [col for col in required_columns if col not in df.columns]
-                    logger.error(f"Missing columns in the CSV file: {missing}")
-                    return
-
-                for col in required_columns:
-                    if not pd.to_numeric(df[col], errors='coerce').notnull().all():
-                        logger.error(f"Found non-numeric values in the column {col}")
-                        return
-
-                n_points = len(df)
-                if n_points > 50000:
-                    step = n_points // 50000 + 1
-                    logger.info(f"Large dataset ({n_points} points). Subsampling with step {step}")
-                    df = df.iloc[::step]
-
-                self.time = df['time'].values
-                self.intensity_11 = df['intensity_11'].values
-                self.intensity_00 = df['intensity_00'].values
-                self.intensity_1m1 = df['intensity_1m1'].values
-                
-              
-                logger.info(f"Data loaded successfully: {len(self.time)} points")
-
-            except Exception as e:
-                logger.error(f"Error loading the CSV file: {str(e)}")
-
-
-    # Part of code to create the graphs
-        if len(self.time) > 0:
-            try:
-                # Main chart with sublots
-                fig_main = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.05)
-                
-                
-                # Traccia order (0,0)
-                fig_main.add_trace(
-                    go.Scattergl(
-                        x=self.time,
-                        y=self.intensity_00,
-                        mode='lines',
-                        name='(0,0) Order',
-                        line=dict(width=1, color='red')
-                    ), row=1, col=1
-                )
-                
-                # Traccia order (1,1)
-                fig_main.add_trace(
-                    go.Scattergl(
-                        x=self.time,
-                        y=self.intensity_11,
-                        mode='lines',
-                        name='(1,1) Order',
-                        line=dict(width=1, color='blue')
-                    ), row=2, col=1
-                )
-                
-                # Traccia order (1,-1)
-                fig_main.add_trace(
-                    go.Scattergl(
-                        x=self.time,
-                        y=self.intensity_1m1,
-                        mode='lines',
-                        name='(1,-1) Order',
-                        line=dict(width=1, color='green')
-                    ), row=3, col=1
-                )
-
-                # Main chart layout
-                fig_main.update_layout(
-                    height=800,
-                    width=1000,
-                    title_text="RHEED Intensity Evolution",
-                    hovermode="x unified",
-                    showlegend=True,
-                    xaxis=dict(fixedrange=False),  # Abilita zoom
-                    yaxis=dict(fixedrange=False)    # Su tutti i subplots
-                
-                )
-
-
-                # Adds annotations to axes
-                fig_main.update_yaxes(title_text="(0,0) Order [J/cm²·s]", row=1, col=1)
-                fig_main.update_yaxes(title_text="(1,1) Order [J/cm²·s]", row=2, col=1)
-                fig_main.update_yaxes(title_text="(1,-1) Order [J/cm²·s]", row=3, col=1)
-                fig_main.update_xaxes(title_text="Time [s]", row=3, col=1)
-
-                self.figures.append(PlotlyFigure(
-                    label='Main Plot',
-                    figure=fig_main.to_plotly_json(),
-                ))
-
-
-                # Graph 4: All intensities superimposed
-                fig_combined = go.Figure()
-                fig_combined.add_trace(go.Scattergl(
-                    x=self.time,
-                    y=self.intensity_00,
-                    name='(0,0) Order',
-                    line=dict(color='red')
-                ))
-                fig_combined.add_trace(go.Scattergl(
-                    x=self.time,
-                    y=self.intensity_11,
-                    name='(1,1) Order',
-                    line=dict(color='blue')
-                ))
-                fig_combined.add_trace(go.Scattergl(
-                    x=self.time,
-                    y=self.intensity_1m1,
-                    name='(1,-1) Order',
-                    line=dict(color='green')
-                ))
-
-                fig_combined.update_layout(
-                    title='Confronto Intensità',
-                    xaxis_title='Time [s]',
-                    yaxis_title='Intensity [J/cm²·s]',
-                    hovermode='x unified',
-                    height=400,
-                    xaxis=dict(fixedrange=False),  # Permette zoom sull'assse x
-                    yaxis=dict(fixedrange=False), # Permette zoom sull'asse y
-                                        
-                )
-
-                self.figures.append(PlotlyFigure(
-                    label='Combined Plot',
-                    figure=fig_combined.to_plotly_json(),
-                ))
-
-            except Exception as e:
-                logger.error(f"Errore nella generazione dei grafici: {str(e)}")
-               
-
-
-class PLDProcess(FabricationProcessStep, ArchiveSection):
-    m_def = Section(
-        a_eln={
-            'hide': [
-                'description', 
-                'lab_id',
-                'comment',
-                'duration',
-                'end_time',
-                'start_time',
-                'job_number',
-                'location',
-                'step_type',
-                'definition_of_process_step',
-                'name',
-                'recipe_name',
-                'recipe_file',
-                'starting_date',
-                'ending_date'
+def send_to_nomad(zip_filename):
+    """
+    Send the ZIP archive to NOMAD using cURL
+    Handles errors and displays server feedback
+    """
+    try:
+        print(f"\nSending {zip_filename} to NOMAD...")
+        result = subprocess.run(
+            [
+                'curl',
+                '-X', 'POST',
+                'http://localhost:8000/fairdi/nomad/latest/api/v1/uploads?token=N45FBTMzTZmBr7IKeNXV9w.QUeIbGA0e_30HHBs-Rp4YA270xs',
+                '-T', zip_filename
             ],
-            'properties': {
-                'order': [
-                    'room',
-                    'id_item_processed',
-                    'target_material',
-                    'thickness_measured',
-                    'target_material_2', 
-                    'thickness_measured_2',
-                    'buffer_gas',
-                    'chamber_pressure',
-                    'temperature_target',
-                    'heater_target_distance',
-                    'repetition_rate',
-                    'exposure_intensity',
-                    'id_proposal',
-                    'affiliation',
-                    'operator',
-                    'datetime',
-                    'rheed_data_images',
-                    'rheed_intensity_plot'
-                ]
-            }
-        },
-    )
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        print("✓ Upload completed successfully!")
+        print("Response from the server:", result.stdout)
+    except subprocess.CalledProcessError as e:
+        print("✗ Error while uploading:")
+        print("Error code:", e.returncode)
+        print("Error output:", e.stderr)
+    except Exception as e:
+        print(f"✗ Unexpected error: {str(e)}")
 
-    # Main fields
-    room = Quantity(
-        type=MEnum(['PLD chamber I', 'PLD chamber II']),
-        description='Select the deposition chamber',
-        a_eln={'component': 'EnumEditQuantity'}
-    )
+def main():
+    """
+    Main flow of the program:
+    1. Requires the entry name, if you want to enter a proposal ID and affiliation
+    2. Process JSON file
+    3. Generate data for the archive
+    4. Create the ZIP
+    5. Offers option for upload
+    """
+    entry_name = input("Enter the name of the NOMAD entry: ").strip()
     
-    id_item_processed = Quantity(
-        type=str,
-        description='Enter sample id',
-        a_eln={'component': 'StringEditQuantity'}
-    )
-    
-    target_material = Quantity(                                     
-        type=MEnum(['LAO', 'Titanium', 'Terbium Scandate']),
-        description='Select the main target material',
-        a_eln={'component': 'EnumEditQuantity'}
-    )
-    
-    thickness_measured = Quantity(
-        type=np.float64,
-        description='Enter the measured thickness of the layers deposited by the target',
-        a_eln={
-            'component': 'NumberEditQuantity',
-            'defaultDisplayUnit': 'uc'
-        },
-        unit='uc'
-    )
-    
-    target_material_2 = Quantity(
-        type=MEnum(['No Target', 'LAO', 'Titanium', 'Terbium Scandate']),
-        description='Select the secondary target material, if not present select No Target',
-        a_eln={'component': 'EnumEditQuantity'}
-    )
-    
-    
-    thickness_measured_2 = Quantity(
-        type=np.float64,
-        description='Enter the measured thickness of the layers deposited by the target 2. If in target material 2 you have selected No Target leave this field blank',
-        a_eln={
-            'component': 'NumberEditQuantity', 
-            'defaultDisplayUnit': 'uc',
-        },
-        unit='uc'
-    )
-    
-    buffer_gas = Quantity(
-        type=MEnum(['O2', 'Ar', 'N2']),
-        description='Select process gas',
-        a_eln={'component': 'EnumEditQuantity'}
-    )
-    
-    chamber_pressure = Quantity(
-        type=np.float64,
-        description='Enter the pressure value inside the chamber',
-        a_eln={
-            'component': 'NumberEditQuantity',
-            'defaultDisplayUnit': 'mbar'
-        },
-        unit='mbar'
-    )
-    
-    temperature_target = Quantity(
-        type=np.float64,
-        description='Enter the heater temperature',
-        a_eln={
-            'component': 'NumberEditQuantity',
-            'defaultDisplayUnit': 'celsius'
-        },
-        unit='celsius'
-    )
-    
-    heater_target_distance = Quantity(
-        type=np.float64,
-        description='Enter target-heater distance',
-        a_eln={
-            'component': 'NumberEditQuantity',
-            'defaultDisplayUnit': 'mm'
-        },
-        unit='mm'
-    )
-    
-    repetition_rate = Quantity(
-        type=np.int64,
-        description='Enter the laser repetition rate',
-        a_eln={
-            'component': 'NumberEditQuantity',
-            'defaultDisplayUnit': 'Hz'
-        },
-        unit='Hz'
-    )
-    
-    exposure_intensity = Quantity(
-        type=np.int64,
-        description='Enter the exposure intensity',
-        a_eln={'component': 'NumberEditQuantity', 'defaultDisplayUnit': 'J/(cm**2*s)'},
-        unit='J/(cm**2*s)'
-    )
-        
-    id_proposal = Quantity(
-        type=str,
-        a_eln={'component': 'StringEditQuantity'},
-        description='Enter the proposal id'
-    )
-    
-    affiliation = Quantity(
-        type=MEnum('NFFA-DI', 'iENTRANCE@ENL'),
-        a_eln={'component': 'EnumEditQuantity'},
-        description='Select the affiliation'
-    )
-    
-    operator = Quantity(
-        type=str,
-        a_eln={'component': 'StringEditQuantity'},
-        description='Enter the operator name'
-    )
+    # Search for the input JSON file within the current folder
+    json_files = glob.glob("*.json")
+    if not json_files:
+        print("No JSON files found in the current folder.")
+        return
 
+    # JSON Reading and Processing
+    with open(json_files[0], "r", encoding="utf-8") as file:
+        input_json = json.load(file)
     
-    datetime = Quantity(
-        type=Datetime,
-        a_eln={'component': 'DateTimeEditQuantity'},
-        description='Enter the date and time of the process'
-    )
+    # PID request
+    pid = None
+    pid_choice = input("Do you want to enter a proposal ID (PID)? (y/n) ").strip().lower()
+    if pid_choice == 'y':
+        while True:
+            try:
+                pid = int(input("Enter PID: "))
+                break
+            except ValueError:
+                print("Error: please enter a valid number")
+
+    # Affiliation Request
+    print("\nSelect affiliation:")
+    print("1 NFFA-DI")
+    print("2 iENTRANCE@ENL")
+    print("3 No affiliation")
+    aff_choice = input("Choice: ").strip()
+    affiliation = "NFFA-DI" if aff_choice == '1' else "iENTRANCE@ENL" if aff_choice == '2' else None
+
+    mapped_data = extract_and_map_data(input_json, pid, affiliation)
+    json_data = json.dumps(mapped_data, indent=4, ensure_ascii=False)
 
 
-    # RHEED image subsection
-    rheed_data_images = SubSection(    
-        section_def=RHEEDImage,
-        repeats=True,
-        description='Add RHEED images'
-    )
+    # RHEED Data Conversion
+    csv_data = convert_rheed_txt_to_csv()
+    
+    # ZIP archive creation
+    zip_filename = create_zip(entry_name, json_data, csv_data)
+    
+    # Upload choice
+    choice = input("\nDo you want to automatically send your data to NOMAD?? (y/n) ").lower()
+    if choice == 'y':
+        send_to_nomad(zip_filename)
+    else:
+        print("\nOperation completed. The ZIP file has been saved in the current folder.")
 
-    rheed_intensity_plot = SubSection(
-        section_def=RHEEDIntensityPlot,
-        description='RHEED intensity plot'
-    )
-
-    def normalize(self, archive: 'EntryArchive', logger: 'BoundLogger') -> None:
-        super().normalize(archive, logger)
-        # Customizations of the class can be added inside normalize
-        
-        # Function that resets thickness_measured_2 if target_material_2 is "No Target"
-        if self.target_material_2 == 'No Target' and self.thickness_measured_2 is not None:
-            self.thickness_measured_2 = None
-            logger.info("thickness_measured_2 è stato resettato perché target_material_2 è 'No Target'")
-        
-
-
-
-m_package.__init_metainfo__()
+if __name__ == "__main__":
+    main()
