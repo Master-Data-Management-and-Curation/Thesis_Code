@@ -22,7 +22,7 @@ def _qobj_to_quantum_object_dict(qobj):
     """
     if not isinstance(qobj, qt.Qobj):
         print(f"Warning: Input is not a QuTiP Qobj. Type: {type(qobj)}")
-        
+
         return {"error": "Input must be a QuTiP Qobj"}, None
     try:
         data_full = qobj.full()
@@ -32,7 +32,7 @@ def _qobj_to_quantum_object_dict(qobj):
 
         matrix_dict = None
         if isinstance(data_full, np.ndarray):
-            # Consistent indentation
+            
             real_part = np.real(data_full).tolist()
             imag_part = np.imag(data_full).tolist()
             matrix_dict = {
@@ -40,8 +40,8 @@ def _qobj_to_quantum_object_dict(qobj):
                 "im": imag_part
             }
 
-        
-        
+
+
         quantum_object_base = {
             "dims": dims_list,
             "shape": shape_list,
@@ -50,13 +50,13 @@ def _qobj_to_quantum_object_dict(qobj):
             "storage_format": "Dense",
         }
 
-        
-        
+
+
         return quantum_object_base, matrix_dict
 
     except Exception as e:
         print(f"Warning: Could not process Qobj: {e}")
-        
+
         return {"error": f"Failed to serialize Qobj: {e}"}, None
 
 # --- Formatting Functions ---
@@ -85,14 +85,14 @@ def format_hamiltonian_parameters(params_dict):
     for key, value_unit_tuple in params_dict.items():
         if isinstance(value_unit_tuple, (tuple, list)) and len(value_unit_tuple) == 2:
             value, unit = value_unit_tuple
-        else: # Assume value only, no unit
+        else: 
              value = value_unit_tuple
              unit = None
 
         if value is not None:
             param_entry = {
                 "name": str(key),
-                "value": float(value) 
+                "value": float(value)
             }
             if unit:
                 param_entry["unit"] = str(unit)
@@ -106,14 +106,14 @@ def format_spin_hamiltonian(name, formula, parameters_list):
     return {
         "name": str(name),
         "formula": str(formula),
-        "parameters": parameters_list # Expects list from format_hamiltonian_parameters
+        "parameters": parameters_list # Expects list 
     }
 
 def format_operator(name, qobj):
     """Formats a QuantumOperator section."""
     qobj_props_dict, matrix_data_dict = _qobj_to_quantum_object_dict(qobj)
     if qobj_props_dict and "error" not in qobj_props_dict:
-        return {
+        operator_dict = {
             "name": str(name),
             "quantum_object": qobj_props_dict
         }
@@ -181,29 +181,28 @@ def format_solver_stats(qutip_result_stats):
         return {}
 
     stats_dict = {}
-    # Map keys based on schema.py mappers
     if 'solver' in qutip_result_stats:
         stats_dict["solver_name"] = str(qutip_result_stats['solver'])
     if 'method' in qutip_result_stats:
         stats_dict["method"] = str(qutip_result_stats['method'])
 
-    init_time = qutip_result_stats.get('ode_init_time', qutip_result_stats.get('init_time')) 
+    init_time = qutip_result_stats.get('ode_init_time', qutip_result_stats.get('init_time'))
     if init_time is not None:
         stats_dict["init_time_s"] = float(init_time)
 
-    prep_time = qutip_result_stats.get('ode_prep_time', qutip_result_stats.get('prep_time')) 
+    prep_time = qutip_result_stats.get('ode_prep_time', qutip_result_stats.get('prep_time'))
     if prep_time is not None:
         stats_dict["prep_time_s"] = float(prep_time)
 
     if 'run_time' in qutip_result_stats:
         stats_dict["run_time_s"] = float(qutip_result_stats['run_time'])
 
-    # Step count 
+    # Step count
     n_steps_val = qutip_result_stats.get('num_steps', qutip_result_stats.get('nsteps'))
     if n_steps_val is not None:
         stats_dict["n_steps"] = int(n_steps_val)
 
-    # Number of expectation operators 
+    # Number of expectation operators
     num_e_ops_val = qutip_result_stats.get('num_e_ops', qutip_result_stats.get('num_exp_ops'))
     if num_e_ops_val is not None:
         stats_dict["num_e_ops"] = int(num_e_ops_val)
@@ -255,7 +254,7 @@ def format_time_evolution_result(property_name, expect_values, e_ops_names,
         try:
             solver_stats_dict["t_start"] = float(tlist[0])
             solver_stats_dict["t_end"] = float(tlist[-1])
-            # If n_steps wasn't found in stats, maybe infer from tlist length
+            # If n_steps wasn't found in stats, infer from tlist length
             if "n_steps" not in solver_stats_dict:
                  solver_stats_dict["n_steps"] = len(tlist)
         except (TypeError, IndexError, ValueError) as e:
@@ -277,31 +276,33 @@ def create_simulation_json(
     filename="simulation_nomad.json",
     program_info=None,
     system_info=None,
-    hamiltonian_info=None, # Dictionary from format_spin_hamiltonian
-    operators_list=None, # List of dictionaries from format_operator
-    states_list=None,    # List of dictionaries from format_state
-    results_list=None,   # List of dictionaries from format_eigenvalue/time_evolution_result
+    hamiltonian_info=None, 
+    operators_list=None, 
+    states_list=None,    
+    results_list=None,   
     simulation_name="Quantum Simulation",
     ):
     """
     Assembles the full simulation data dictionary and saves it to a JSON file.
+    Modifies the output structure to match the parser's expectation of dictionaries
+    for operators, states, and results, keyed by name/label or type.
     """
     simulation_data = {}
 
-    # Add simulation name (used by parser's get_system if quantum_system name is missing)
+    # Add simulation name 
     simulation_data["simulation_name"] = simulation_name
 
     # Add program info
     if program_info:
         simulation_data["program"] = program_info
     else:
-        simulation_data["program"] = format_program_info() # Default to QuTiP
+        simulation_data["program"] = format_program_info() 
 
     # Add system info
     if system_info:
         simulation_data["quantum_system"] = system_info
     else:
-         simulation_data["quantum_system"] = format_system_info() # Default name
+         simulation_data["quantum_system"] = format_system_info() 
 
     # Add hamiltonian (using the generalized key 'spin_hamiltonian')
     if hamiltonian_info:
@@ -309,16 +310,52 @@ def create_simulation_json(
     else:
         print("Warning: Hamiltonian information not provided.")
 
-    # Add operators (parser expects 'quantum_operators' key)
-    simulation_data["operators"] = operators_list if operators_list else [] 
+    # Add operators 
+    operators_dict = {}
+    if operators_list:
+        for op in operators_list:
+            if isinstance(op, dict) and 'name' in op:
+                operators_dict[op['name']] = op
+            else:
+                print(f"Warning: Skipping invalid operator entry in list: {op}")
+    simulation_data["operators"] = operators_dict
 
-    # Add states (parser expects 'quantum_states' key)
-    simulation_data["states"] = states_list if states_list else [] 
 
-    # Add results (parser expects 'results' key)
-    simulation_data["results"] = results_list if results_list else []
+    # Add states 
+    states_dict = {}
+    if states_list:
+        for state in states_list:
+            if isinstance(state, dict) and 'label' in state:
+                 states_dict[state['label']] = state
+            else:
+                print(f"Warning: Skipping invalid state entry in list: {state}")
 
-    # Add timestamp for context
+    simulation_data["states"] = states_dict
+
+
+    # Add results 
+    results_dict = {}
+    if results_list:
+        for res in results_list:
+            if isinstance(res, dict) and 'calculation_type' in res:
+                results_dict[res['calculation_type']] = res
+            else:
+                 print(f"Warning: Skipping invalid result entry in list: {res}")
+
+    results_output_dict = {}
+    if results_list:
+        for i, res in enumerate(results_list):
+            if isinstance(res, dict) and 'calculation_type' in res:
+                # Create a unique key for each result
+                key = res.get('property_name', f"result_{i}")
+                results_output_dict[key] = res
+            else:
+                 print(f"Warning: Skipping invalid result entry in list at index {i}: {res}")
+
+    simulation_data["results"] = results_output_dict
+
+
+    #
     simulation_data["generation_timestamp"] = datetime.now().isoformat()
 
     # --- Write to JSON File ---
@@ -326,11 +363,11 @@ def create_simulation_json(
         output_dir = os.getcwd()
         full_path = os.path.join(output_dir, filename)
         with open(full_path, 'w') as f:
-            # Use default=str as a fallback for non-standard types
+            
             json.dump(simulation_data, f, indent=4, default=str)
         print(f"\nSuccessfully wrote NOMAD-schema compatible simulation data to '{filename}'")
         print(f"JSON file saved in directory: {output_dir}")
-        return full_path # Return the path to the saved file
+        return full_path 
     except TypeError as e:
          print(f"\nError during JSON serialization: {e}")
          print("There might be incompatible data types (e.g., complex numbers not handled by default=str).")

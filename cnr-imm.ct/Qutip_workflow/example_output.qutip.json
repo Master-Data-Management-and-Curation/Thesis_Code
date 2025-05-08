@@ -34,8 +34,8 @@
             }
         ]
     },
-    "operators": [
-        {
+    "operators": {
+        "Sz": {
             "name": "Sz",
             "quantum_object": {
                 "dims": [
@@ -53,9 +53,31 @@
                 "type": "oper",
                 "is_hermitian": true,
                 "storage_format": "Dense"
+            },
+            "matrix": {
+                "re": [
+                    [
+                        1.0,
+                        0.0
+                    ],
+                    [
+                        0.0,
+                        -1.0
+                    ]
+                ],
+                "im": [
+                    [
+                        0.0,
+                        0.0
+                    ],
+                    [
+                        0.0,
+                        0.0
+                    ]
+                ]
             }
         },
-        {
+        "Sx": {
             "name": "Sx",
             "quantum_object": {
                 "dims": [
@@ -73,11 +95,33 @@
                 "type": "oper",
                 "is_hermitian": true,
                 "storage_format": "Dense"
+            },
+            "matrix": {
+                "re": [
+                    [
+                        0.0,
+                        1.0
+                    ],
+                    [
+                        1.0,
+                        0.0
+                    ]
+                ],
+                "im": [
+                    [
+                        0.0,
+                        0.0
+                    ],
+                    [
+                        0.0,
+                        0.0
+                    ]
+                ]
             }
         }
-    ],
-    "states": [
-        {
+    },
+    "states": {
+        "Initial |+>": {
             "label": "Initial |+>",
             "quantum_object": {
                 "dims": [
@@ -115,9 +159,9 @@
                 ]
             }
         }
-    ],
-    "results": [
-        {
+    },
+    "results": {
+        "Eigenvalues vs B": {
             "calculation_type": "eigenvalues",
             "property_name": "Eigenvalues vs B",
             "eigenvalues": [
@@ -3133,7 +3177,7 @@
                 "unit": "T"
             }
         },
-        {
+        "Expectation Value <Sz> vs Time": {
             "calculation_type": "time_evolution",
             "property_name": "Expectation Value <Sz> vs Time",
             "expectation_values": [
@@ -5158,6 +5202,6 @@
                 "final_state_saved": true
             }
         }
-    ],
-    "generation_timestamp": "2025-04-30T15:41:43.410508"
+    },
+    "generation_timestamp": "2025-05-08T11:24:58.948055"
 }

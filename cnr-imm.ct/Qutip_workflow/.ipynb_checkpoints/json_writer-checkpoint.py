@@ -22,7 +22,7 @@ def _qobj_to_quantum_object_dict(qobj):
     """
     if not isinstance(qobj, qt.Qobj):
         print(f"Warning: Input is not a QuTiP Qobj. Type: {type(qobj)}")
-        
+
         return {"error": "Input must be a QuTiP Qobj"}, None
     try:
         data_full = qobj.full()
@@ -40,8 +40,8 @@ def _qobj_to_quantum_object_dict(qobj):
                 "im": imag_part
             }
 
-        
-        
+
+
         quantum_object_base = {
             "dims": dims_list,
             "shape": shape_list,
@@ -50,13 +50,13 @@ def _qobj_to_quantum_object_dict(qobj):
             "storage_format": "Dense",
         }
 
-        
-        
+
+
         return quantum_object_base, matrix_dict
 
     except Exception as e:
         print(f"Warning: Could not process Qobj: {e}")
-        
+
         return {"error": f"Failed to serialize Qobj: {e}"}, None
 
 # --- Formatting Functions ---
@@ -92,7 +92,7 @@ def format_hamiltonian_parameters(params_dict):
         if value is not None:
             param_entry = {
                 "name": str(key),
-                "value": float(value) 
+                "value": float(value)
             }
             if unit:
                 param_entry["unit"] = str(unit)
@@ -113,7 +113,7 @@ def format_operator(name, qobj):
     """Formats a QuantumOperator section."""
     qobj_props_dict, matrix_data_dict = _qobj_to_quantum_object_dict(qobj)
     if qobj_props_dict and "error" not in qobj_props_dict:
-        return {
+        operator_dict = {
             "name": str(name),
             "quantum_object": qobj_props_dict
         }
@@ -187,23 +187,23 @@ def format_solver_stats(qutip_result_stats):
     if 'method' in qutip_result_stats:
         stats_dict["method"] = str(qutip_result_stats['method'])
 
-    init_time = qutip_result_stats.get('ode_init_time', qutip_result_stats.get('init_time')) 
+    init_time = qutip_result_stats.get('ode_init_time', qutip_result_stats.get('init_time'))
     if init_time is not None:
         stats_dict["init_time_s"] = float(init_time)
 
-    prep_time = qutip_result_stats.get('ode_prep_time', qutip_result_stats.get('prep_time')) 
+    prep_time = qutip_result_stats.get('ode_prep_time', qutip_result_stats.get('prep_time'))
     if prep_time is not None:
         stats_dict["prep_time_s"] = float(prep_time)
 
     if 'run_time' in qutip_result_stats:
         stats_dict["run_time_s"] = float(qutip_result_stats['run_time'])
 
-    # Step count 
+    # Step count
     n_steps_val = qutip_result_stats.get('num_steps', qutip_result_stats.get('nsteps'))
     if n_steps_val is not None:
         stats_dict["n_steps"] = int(n_steps_val)
 
-    # Number of expectation operators 
+    # Number of expectation operators
     num_e_ops_val = qutip_result_stats.get('num_e_ops', qutip_result_stats.get('num_exp_ops'))
     if num_e_ops_val is not None:
         stats_dict["num_e_ops"] = int(num_e_ops_val)
@@ -285,6 +285,8 @@ def create_simulation_json(
     ):
     """
     Assembles the full simulation data dictionary and saves it to a JSON file.
+    Modifies the output structure to match the parser's expectation of dictionaries
+    for operators, states, and results, keyed by name/label or type.
     """
     simulation_data = {}
 
@@ -309,14 +311,73 @@ def create_simulation_json(
     else:
         print("Warning: Hamiltonian information not provided.")
 
-    # Add operators (parser expects 'quantum_operators' key)
-    simulation_data["operators"] = operators_list if operators_list else [] 
+    # Add operators (parser expects 'operators' key with a dictionary)
+    operators_dict = {}
+    if operators_list:
+        for op in operators_list:
+            if isinstance(op, dict) and 'name' in op:
+                operators_dict[op['name']] = op
+            else:
+                print(f"Warning: Skipping invalid operator entry in list: {op}")
+    simulation_data["operators"] = operators_dict
 
-    # Add states (parser expects 'quantum_states' key)
-    simulation_data["states"] = states_list if states_list else [] 
 
-    # Add results (parser expects 'results' key)
-    simulation_data["results"] = results_list if results_list else []
+    # Add states (parser expects 'states' key with a dictionary)
+    states_dict = {}
+    if states_list:
+        for state in states_list:
+            if isinstance(state, dict) and 'label' in state:
+                 states_dict[state['label']] = state
+            else:
+                print(f"Warning: Skipping invalid state entry in list: {state}")
+
+    simulation_data["states"] = states_dict
+
+
+    # Add results (parser expects 'results' key with a dictionary keyed by calculation_type or property_name)
+    # The parser's get_outputs method expects keys like 'eigenvalues' and 'time_evolution' at this level
+    # Based on the parser logic, it iterates through keys *within* the "results" dictionary.
+    # Let's structure results as expected by get_outputs: a dict keyed by the calculation_type.
+    results_dict = {}
+    if results_list:
+        for res in results_list:
+            if isinstance(res, dict) and 'calculation_type' in res:
+                # Use calculation_type as the primary key as per get_outputs logic
+                # If there are multiple results of the same type, this will overwrite.
+                # A better approach might be needed if multiple results of the same type are expected.
+                # For now, follow the parser's implied structure.
+                results_dict[res['calculation_type']] = res
+            else:
+                 print(f"Warning: Skipping invalid result entry in list: {res}")
+
+    # Re-checking the parser's get_outputs method:
+    # It iterates through `source.items()` where `source` is the value of the 'results' key.
+    # If source is the list, source.items() won't work.
+    # If source is a dict keyed by calc_type, it iterates through those.
+    # The original JSON example had 'results' as a list. The parser's get_outputs explicitly checks `if not isinstance(source, dict): return processed_outputs`.
+    # This means the parser currently requires 'results' to be a dictionary.
+    # Let's change the json_writer to make 'results' a dictionary where keys are arbitrary labels (maybe property_name)
+    # and values are the result dictionaries. The get_outputs method would then need a slight adjustment
+    # to iterate through the values of this dictionary.
+
+    # **Correction:** Based on the parser's `get_outputs` method which iterates through `source.items()`
+    # where `source` is the value of the 'results' key, and then checks `result_data.get('calculation_type')`,
+    # the 'results' section in the JSON *should* be a dictionary where keys are arbitrary (e.g., 'eigenvalues_result_1', 'time_evolution_result_A')
+    # and the values are the individual result dictionaries (which contain 'calculation_type').
+    # The original example JSON was incorrect based on the parser code.
+
+    results_output_dict = {}
+    if results_list:
+        for i, res in enumerate(results_list):
+            if isinstance(res, dict) and 'calculation_type' in res:
+                # Create a unique key for each result, maybe using property_name if available, fallback to index
+                key = res.get('property_name', f"result_{i}")
+                results_output_dict[key] = res
+            else:
+                 print(f"Warning: Skipping invalid result entry in list at index {i}: {res}")
+
+    simulation_data["results"] = results_output_dict
+
 
     # Add timestamp for context
     simulation_data["generation_timestamp"] = datetime.now().isoformat()
@@ -326,7 +387,7 @@ def create_simulation_json(
         output_dir = os.getcwd()
         full_path = os.path.join(output_dir, filename)
         with open(full_path, 'w') as f:
-            # Use default=str as a fallback for non-standard types
+            # Use default=str as a fallback for non-standard types like complex numbers
             json.dump(simulation_data, f, indent=4, default=str)
         print(f"\nSuccessfully wrote NOMAD-schema compatible simulation data to '{filename}'")
         print(f"JSON file saved in directory: {output_dir}")
@@ -336,6 +397,7 @@ def create_simulation_json(
          print("There might be incompatible data types (e.g., complex numbers not handled by default=str).")
          print("Problematic data structure snippet:")
          try:
+             # Attempt to serialize with a custom handler to show problematic types
              print(json.dumps(simulation_data, indent=4, default=lambda o: f"<unserializable: {type(o)}>"))
          except Exception:
              print("(Could not serialize snippet for debugging)")
