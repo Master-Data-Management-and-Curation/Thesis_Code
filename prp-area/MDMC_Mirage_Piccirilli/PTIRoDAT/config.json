@@ -1,0 +1,10 @@
+{
+  "BASE_URL" : "your ELAB url/api/v2",
+  "API_KEY" : "your API key here",
+  "TEMPLATES" : {
+	here the list of your templates as:
+      "29 - Standard Beamtime": 29,
+    "30 - In House Reseach": 30,
+    "22 - Industrial": 22
+  }
+}
