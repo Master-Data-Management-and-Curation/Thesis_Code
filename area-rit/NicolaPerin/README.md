@@ -71,7 +71,7 @@ For a fully reproducible, local development environment, please continue to use 
 ---
 
 ## Project structure
-```
+   ```bash
    lame_fair_by_design/
    ├─ file_manager/
    │  ├─ views.py           # Core logic for uploading, creating, and viewing files
@@ -85,7 +85,7 @@ For a fully reproducible, local development environment, please continue to use 
    ├─ requirements.txt      # Project dependencies
    ├─ manage.py             # Django management commands   
    └─ ...
-
+   ```
 --
 
 ## License
