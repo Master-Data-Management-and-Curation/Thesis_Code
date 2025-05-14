@@ -1,0 +1,199 @@
++--+ Data Format
+|  '--+ Data Block, Frames: 10, Pixel Format: Monochrome 16-bit
+|     '--- Data Block, Region: 1340 x 22
++--+ Basic Calibrations
+|  +--- Sensor Information, Active Area: 1340 x 400, Orientation: Normal Orientation
+|  '--- Sensor Mapping, Location: (0; 199), Size: 1340 x 22, Binning: 1 x 1
++--+ Data Histories
+|  '--+ Data History
+|     '--+ Data taken by simone.contu on 27/02/2025 16:19 with LightField version 6.15.2.2201 from Teledyne Princeton Instruments
+|        '--+ Experiment
+|           +--+ System
+|           |  +--+ Cameras
+|           |  |  '--- PIXIS: 400BR eXcelon (SN: X110027823)
+|           |  +--+ Spectrometers
+|           |  |  '--+ SCT-320 (SN: 32010868)
+|           |  |     +--+ Turrets
+|           |  |     |  '--+ Turret
+|           |  |     |     '--+ Gratings
+|           |  |     |        +--- Grating, Density: 1800 g/mm, Blaze: 500 nm
+|           |  |     |        +--- Grating, Density: 1200 g/mm, Blaze: 750 nm
+|           |  |     |        '--- Grating, Density: 600 g/mm, Blaze: 750 nm
+|           |  |     '--+ Optical Ports
+|           |  |        +--+ Entrance
+|           |  |        |  '--+ Side
+|           |  |        |     +--- Manual Slit
+|           |  |        |     '--- Shutter, Vincent CS25
+|           |  |        '--+ Exit
+|           |  |           '--+ Side
+|           |  |              +--- Focal Plane
+|           |  |              '--- Shutter, None
+|           |  '--+ Device Links
+|           |     '--- (SN: X110027823)(SN: 32010868)Side Output
+|           +--+ Devices
+|           |  +--+ Cameras
+|           |  |  '--+ PIXIS: 400BR eXcelon (SN: X110027823)
+|           |  |     +--+ Acquisition
+|           |  |     |  +--- Estimated Frame Rate: 0,0167 fps
+|           |  |     |  +--- Format: Monochrome 16-bit
+|           |  |     |  +--- Bit Depth: 16 bits
+|           |  |     |  +--- Frame Size: 58.960 bytes
+|           |  |     |  +--- Frame Stride: 58.960 bytes
+|           |  |     |  +--- Effective Readout Orientation: Normal Orientation
+|           |  |     |  +--- Automatically Correct for Hardware: Yes
+|           |  |     |  +--- Frames per Readout: 1
+|           |  |     |  +--- Estimated Readout Rate: 0,0167 readout/s
+|           |  |     |  +--- Readout Stride: 58.960 bytes
+|           |  |     |  +--+ Frame Tracking
+|           |  |     |  |  '--- Frame Tracking: Disabled
+|           |  |     |  '--+ Time Stamping
+|           |  |     |     '--- Time Stamping: None
+|           |  |     +--+ Analog to Digital Conversion
+|           |  |     |  +--- Speed: 2 MHz
+|           |  |     |  +--- Bit Depth: 16 bits
+|           |  |     |  +--- Quality: Low Noise
+|           |  |     |  '--- Analog Gain: Medium
+|           |  |     +--+ Experiment
+|           |  |     |  +--+ Acquisition
+|           |  |     |  |  +--- Frames to Save: 10
+|           |  |     |  |  +--- Format: Monochrome 16-bit
+|           |  |     |  |  +--- Bit Depth: 16 bits
+|           |  |     |  |  +--- Frame Size: 58.960 bytes
+|           |  |     |  |  +--- Frame Stride: 58.960 bytes
+|           |  |     |  |  +--- Initial Discard Frames: 0
+|           |  |     |  |  +--+ Notification
+|           |  |     |  |  |  '--- Send Notifications: No
+|           |  |     |  |  +--+ Orientation
+|           |  |     |  |  |  +--- Final Orientation: Normal Orientation
+|           |  |     |  |  |  +--- Light Path Orientation: Flipped Horizontally
+|           |  |     |  |  |  '--- Effective Light Path Orientation: Normal Orientation
+|           |  |     |  |  '--+ Output Files
+|           |  |     |  |     '--+ All File Names
+|           |  |     |  |        '--- Result File, C:\Users\simone.contu\Documents\LightField\2025 febbraio 27 16_19_36.spe
+|           |  |     |  +--+ File Name Generation
+|           |  |     |  |  +--- Save In: C:\Users\simone.contu\Documents\LightField
+|           |  |     |  |  +--- File Name: <blank>
+|           |  |     |  |  +--- Add Date: Yes
+|           |  |     |  |  +--- Date Format: YYYY-Month-DD
+|           |  |     |  |  +--- Add Time: Yes
+|           |  |     |  |  +--- Time Format: hh:mm:ss (24h)
+|           |  |     |  |  '--- Increment File Name: No
+|           |  |     |  +--+ Online Corrections
+|           |  |     |  |  +--+ Background Correction
+|           |  |     |  |  |  '--- Correct Background: No
+|           |  |     |  |  +--+ Blemish Correction
+|           |  |     |  |  |  '--- Remove Sensor Blemishes: No
+|           |  |     |  |  +--+ Cosmic Ray Correction
+|           |  |     |  |  |  '--- Remove Cosmic Rays: No
+|           |  |     |  |  +--+ Flatfield Correction
+|           |  |     |  |  |  '--- Correct Flatfield: No
+|           |  |     |  |  '--+ Orientation Correction
+|           |  |     |  |     '--- Correct Orientation: No
+|           |  |     |  +--+ Online Export
+|           |  |     |  |  '--- Export Acquired Data: No
+|           |  |     |  '--+ Online Processing
+|           |  |     |     +--+ Cross Section
+|           |  |     |     |  '--- Create Cross Section: No
+|           |  |     |     +--+ Formulas
+|           |  |     |     |  '--- Apply Formula: No
+|           |  |     |     '--+ Frame Combination
+|           |  |     |        '--- Exposures per Frame: 1
+|           |  |     +--+ Hardware I/O
+|           |  |     |  +--- Output Signal: Shutter Open
+|           |  |     |  '--+ Trigger
+|           |  |     |     '--- Trigger Response: No Response
+|           |  |     +--+ Readout Control
+|           |  |     |  +--- Mode: Full Frame
+|           |  |     |  +--- Time: 35,932 ms
+|           |  |     |  +--- Readout Orientation: Normal Orientation
+|           |  |     |  +--- Vertical Shift Rate: 15,2 µs
+|           |  |     |  '--+ Regions Of Interest
+|           |  |     |     +--+ Regions
+|           |  |     |     |  '--- ROI, Location: (0; 199), Size: 1340 x 22, Binning: 1 x 1
+|           |  |     |     +--- Regions of Interest: Custom Regions of Interest
+|           |  |     |     '--- Binning Provided By: Hardware
+|           |  |     +--+ Sensor
+|           |  |     |  +--+ Cleaning
+|           |  |     |  |  +--- Clean Cycle Height: 400 rows
+|           |  |     |  |  +--- Clean Cycles: 1
+|           |  |     |  |  +--- Final Section Height: 2 rows
+|           |  |     |  |  '--- Final Sections: 5
+|           |  |     |  +--+ Information
+|           |  |     |  |  +--- Sensor Name: E2V 1340 x 400 (CCD 36)(B)(R)(eXcelon)
+|           |  |     |  |  +--- Sensor Type: CCD
+|           |  |     |  |  +--- CCD Characteristics: Back Illuminated, Deep Depleted and Excelon Enabled
+|           |  |     |  |  +--+ Active Area
+|           |  |     |  |  |  +--- Width: 1340 pixels
+|           |  |     |  |  |  +--- Height: 400 rows
+|           |  |     |  |  |  +--- Extended Height: 0 rows
+|           |  |     |  |  |  +--- Top Margin: 0 rows
+|           |  |     |  |  |  +--- Bottom Margin: 0 rows
+|           |  |     |  |  |  +--- Left Margin: 8 pixels
+|           |  |     |  |  |  '--- Right Margin: 8 pixels
+|           |  |     |  |  +--+ Masked Area
+|           |  |     |  |  |  +--- Mask Height: 0 rows
+|           |  |     |  |  |  +--- Mask Top Margin: 0 rows
+|           |  |     |  |  |  '--- Mask Bottom Margin: 0 rows
+|           |  |     |  |  +--+ Pixel
+|           |  |     |  |  |  +--- Pixel Width: 20 µm
+|           |  |     |  |  |  +--- Pixel Height: 20 µm
+|           |  |     |  |  |  +--- Pixel Gap Width: 0 µm
+|           |  |     |  |  |  '--- Pixel Gap Height: 0 µm
+|           |  |     |  |  '--+ Secondary
+|           |  |     |  |     +--+ Active Area
+|           |  |     |  |     |  '--- Secondary Height: 0 rows
+|           |  |     |  |     '--+ Masked Area
+|           |  |     |  |        '--- Secondary Mask Height: 0 rows
+|           |  |     |  +--+ Layout
+|           |  |     |  |  '--+ Active Area
+|           |  |     |  |     +--- Width: 1340 pixels
+|           |  |     |  |     +--- Height: 400 rows
+|           |  |     |  |     +--- Top Margin: 0 rows
+|           |  |     |  |     +--- Bottom Margin: 0 rows
+|           |  |     |  |     +--- Left Margin: 8 pixels
+|           |  |     |  |     '--- Right Margin: 8 pixels
+|           |  |     |  '--+ Temperature
+|           |  |     |     +--- Current Temperature: -69°C
+|           |  |     |     +--- Status: Locked
+|           |  |     |     '--- Temperature Setpoint: -70°C
+|           |  |     '--+ Shutter Timing
+|           |  |        +--- Exposure Time: 1 min
+|           |  |        +--- Closing Delay: 18 ms
+|           |  |        +--- Delay Resolution: 1 ms
+|           |  |        '--- Mode: Normal
+|           |  '--+ Spectrometers
+|           |     '--+ SCT-320 (SN: 32010868)
+|           |        +--+ Calibration Information
+|           |        |  +--- Focal Length: 328 mm
+|           |        |  +--- Inclusion Angle: 17,8°
+|           |        |  '--- Detector Angle: 8,46°
+|           |        +--+ Experiment
+|           |        |  +--+ Intensity Calibration
+|           |        |  |  +--- Apply Intensity Calibration: No
+|           |        |  |  +--- Optimized For: Visible
+|           |        |  |  +--- Date: N/A
+|           |        |  |  '--- Orientation: N/A
+|           |        |  +--+ Step & Glue
+|           |        |  |  '--- Step & Glue: Disabled
+|           |        |  '--+ Wavelength Calibration
+|           |        |     +--- Actual Center Wavelength: N/A
+|           |        |     +--- Date: 21/05/2024 15:11
+|           |        |     +--- Type: Broad
+|           |        |     +--- Error: 0,008 nm RMS
+|           |        |     +--- Focal Length: 327,832 mm
+|           |        |     +--- Inclusion Angle: 17,7889°
+|           |        |     +--- Detector Angle: 9,01662°
+|           |        |     '--- Orientation: Normal Orientation
+|           |        +--+ Grating
+|           |        |  +--- Center Wavelength: 670,99948 cm⁻¹
+|           |        |  '--- Grating: 1200 g/mm; 750 nm
+|           |        '--+ Optical Port
+|           |           +--+ Entrance
+|           |           |  '--- Active Port: Side Entrance
+|           |           '--+ Exit
+|           |              '--- Active Port: Side Exit
+|           '--+ Environment
+|              +--- Working Folder: C:\Users\simone.contu\Documents\LightField
+|              '--- Scratch Folder: C:\Users\simone.contu\AppData\Local\Temp\LightField
+'--+ General Information
+   '--- Data originally taken by UTENTI\simone.contu on 27/02/2025 16:29 and last modified on 27/02/2025 16:29
