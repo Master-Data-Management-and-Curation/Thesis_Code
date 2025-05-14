@@ -86,7 +86,7 @@ For a fully reproducible, local development environment, please continue to use 
    ├─ manage.py             # Django management commands   
    └─ ...
    ```
---
+---
 
 ## License
 
