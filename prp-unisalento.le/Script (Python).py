@@ -8,93 +8,94 @@ from ncempy.io import dm
 import numpy as np
 import json
 
-# Lista aggiornata dei parametri da cercare
+# Updated list of search parameters
 METADATA_KEYS = [
     "Device Name", "Formatted Voltage", "Exposure (s)", "Acquisition Date",
     "Acquisition Time", "Formatted Indicated Mag", "Pixel Size (um)", "PixelDepth",
     "Stage Alpha", "Stage Beta", "Stage X", "Stage Y", "Stage Z",
-    "Active Size (pixels)"  # Nuovo parametro aggiunto
+    "Active Size (pixels)"  # New parameter added
 ]
 
 def find_metadata_values(metadata):
-    """Cerca nei metadati i parametri richiesti e ne estrae il valore dopo i due punti."""
-    extracted_data = {key: "N/A" for key in METADATA_KEYS}  # Inizializza con N/A
+    """ It searches the metadata for the required parameters and extracts the value after the colon."""
+    extracted_data = {key: "N/A" for key in METADATA_KEYS}  # initialise with N/A
    
     def recursive_search(data):
-        """Ricorsivamente cerca le chiavi nei dizionari e liste annidate."""
+        """ Recursively search for keys in dictionaries and nested lists."""
         if isinstance(data, dict):
             for key, value in data.items():
                 for target_key in METADATA_KEYS:
-                    if target_key in key:  # Se il nome della chiave contiene il parametro cercato
-                        extracted_data[target_key] = convert_value(value)  # Converte i dati
-                recursive_search(value)  # Continua la ricerca nei sotto-dizionari
+                    if target_key in key:  # If the key name contains the searched parameter
+                        extracted_data[target_key] = convert_value(value)  # Converts data
+                recursive_search(value)  # Continue searching in sub-dictionaries
         elif isinstance(data, list):
             for item in data:
-                recursive_search(item)  # Cerca in ogni elemento della lista
+                recursive_search(item)  # Search each item in the list
 
     recursive_search(metadata)
     return extracted_data
 
 def convert_value(value):
-    """Converte i tipi NumPy in tipi standard Python per la compatibilità JSON."""
+    """ Converts NumPy types to standard Python types for JSON compatibility."""
     if isinstance(value, np.ndarray):
-        return value.tolist()  # Converti array NumPy in lista Python
+        return value.tolist()  # Convert NumPy array to Python list
     elif isinstance(value, (np.int64, np.uint64, np.int32, np.uint32)):
-        return int(value)  # Converti interi NumPy in interi Python
+        return int(value)  # Convert NumPy integers to Python integers
     elif isinstance(value, (np.float64, np.float32)):
-        return float(value)  # Converti float NumPy in float Python
-    return value  # Restituisci il valore originale se già compatibile
+        return float(value)  # Convertire float NumPy in float Python
+    return value  # Return the original value if already compatible
 
 def extract_metadata(dm4_file):
-    """Estrai SOLO i metadati richiesti da un file DM4."""
+    """ Extract ONLY the required metadata from a DM4 file."""
     try:
         dm4_data = dm.fileDM(dm4_file)
-        metadata = dm4_data.allTags  # Estrarre tutti i metadati
+        metadata = dm4_data.allTags  # Extract all metadata
        
-        # Cerca i parametri e i valori dopo i due punti
+        # Search for parameters and values after the colon
         filtered_metadata = find_metadata_values(metadata)
         return filtered_metadata
 
     except Exception as e:
-        return {"Errore": f"Errore nella lettura di {dm4_file}: {e}"}
+        return {"Error": f"Error reading {dm4_file}: {e}"}
 
 def convert_to_text(metadata_dict):
-    """Converte i metadati in una stringa formattata per il file di testo."""
+    """ Converts metadata into a formatted string for the text file."""
     text_output = ""
     for file_name, metadata in metadata_dict.items():
-        text_output += f"=== METADATI DI {file_name} ===\n\n"
+        text_output += f"=== METADATA OF {file_name} ===\n\n"
         for key, value in metadata.items():
             text_output += f"{key}: {value}\n"
-        text_output += "\n" + "=" * 50 + "\n\n"  # Separatore tra file
+        text_output += "\n" + "=" * 50 + "\n\n"  # Inter-file separator
     return text_output
 
 def save_results(folder_path, metadata_dict):
-    """Salva i metadati sia in formato TXT che JSON."""
+    """ Saves metadata in both TXT and JSON format."""
     output_txt = os.path.join(folder_path, "metadata_output.txt")
     output_json = os.path.join(folder_path, "metadata_output.json")
 
     try:
-        # Salvataggio in TXT
+        # Saving in TXT
         with open(output_txt, "w", encoding="utf-8") as txt_file:
             txt_file.write(convert_to_text(metadata_dict))
        
-        # Salvataggio in JSON con conversione automatica dei tipi
+        # Saving in JSON with automatic type conversion
         with open(output_json, "w", encoding="utf-8") as json_file:
             json.dump(metadata_dict, json_file, indent=4, ensure_ascii=False)
 
-        messagebox.showinfo("Completato", f"Metadati salvati con successo in:\n{output_txt}\n{output_json}")
+        messagebox.showinfo("Completed", f"Metadata saved successfully
+ in:\n{output_txt}\n{output_json}")
         open_folder(folder_path)
 
     except Exception as e:
-        messagebox.showerror("Errore", f"Impossibile salvare i file:\n{e}")
+        messagebox.showerror("Error", f"Impossible to save files:\n{e}")
 
 def process_dm4_files(folder_path):
-    """Legge i file DM4 nella cartella e salva i metadati."""
+    """ Reads the DM4 files in the folder and saves the metadata."""
     metadata_dict = {}
     dm4_files = glob.glob(os.path.join(folder_path, "*.dm4"))
 
     if not dm4_files:
-        messagebox.showerror("Errore", "Nessun file DM4 trovato nella cartella selezionata.")
+        messagebox.showerror("Error", " No DM4 file found in the selected folder.")
         return
 
     for dm4_file in dm4_files:
@@ -104,28 +105,27 @@ def process_dm4_files(folder_path):
     save_results(folder_path, metadata_dict)
 
 def open_folder(path):
-    """Apre la cartella dei risultati in Esplora File/Finder."""
+    """ Opens the results folder in File Explorer /Finder."""
     try:
         if os.name == 'nt':  # Windows
             subprocess.run(f'explorer "{path}"')
         elif os.name == 'posix':  # Mac/Linux
             subprocess.run(['xdg-open', path] if 'linux' in sys.platform else ['open', path])
     except Exception as e:
-        messagebox.showerror("Errore", f"Impossibile aprire la cartella:\n{e}")
+        messagebox.showerror("Error", f" Unable to open folder:\n{e}")
 
 def select_folder():
-    """Apre la finestra di selezione della cartella e avvia l'elaborazione."""
+    """ Opens the folder selection window and starts processing."""
     root = tk.Tk()
-    root.withdraw()  # Nasconde la finestra principale
-
-    folder_selected = filedialog.askdirectory(title="Seleziona la cartella con i file DM4")
+    root.withdraw()  # Hides the main window
+    folder_selected = filedialog.askdirectory(title=" Select the folder with the DM4 files")
 
     if folder_selected:
         process_dm4_files(folder_selected)
     else:
-        messagebox.showinfo("Info", "Nessuna cartella selezionata. Operazione annullata.")
+        messagebox.showinfo("Info", " No folder selected. Operation aborted.")
 
-# Se eseguito con doppio click, usa la cartella dello script
+# When double-clicked, it uses the script folder
 if __name__ == "__main__":
     select_folder()
-    input("\nPremi INVIO per chiudere...")  # Evita la chiusura immediata
+    input("\nPress ENTER to close...")  # Avoid immediate closure
