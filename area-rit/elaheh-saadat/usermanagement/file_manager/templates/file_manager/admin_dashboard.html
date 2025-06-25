@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand">Admin Dashboard - {{ username }}</span>
+            <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+        </div>
+    </nav>
+    
+    <div class="container mt-5">
+        <h2>Welcome, {{ username }}</h2>
+        <h3>You have admin privileges.</h3>
+        
+        <!-- Dropdown for Admin Actions -->
+        <div class="dropdown mt-3">
+            <button class="btn btn-primary dropdown-toggle" type="button" id="adminActionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Admin Actions
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="adminActionsDropdown">
+                <li><a class="dropdown-item" href="{% url 'new_experiment' %}">New Experiment</a></li>
+                <li><a class="dropdown-item" href="{% url 'file_list' %}">View Uploaded Files</a></li>
+                <li><a class="dropdown-item" href="{% url 'edit_metadata' %}">Upload Metadata Schema</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
