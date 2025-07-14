@@ -1,0 +1,74 @@
+#                                                                     
+# :   :::   :::     ::::    ::::  :::::::::   ::::::::                
+# :+:   :+: :+: :+:   +:+:+: :+:+:+ :+:    :+: :+:    :+              
+#  +:+ +:+ +:+   +:+  +:+ +:+:+ +:+ +:+    +:+ +:+    +:+             
+#   +#++: +#++:++#++: +#+  +:+  +#+ +#++:++#+  +#+    +:+             
+#    +#+  +#+     +#+ +#+       +#+ +#+    +#+ +#+    +#+             
+#    #+#  #+#     #+# #+#       #+# #+#    #+# #+#    #+#             
+#    ###  ###     ### ###       ### #########   ########              
+#                                                                     
+#                                                                     
+#       Version 5.0.1 Revision 19005 Hash 7847da5f5                   
+#                Branch is devel-dichroism                            
+#         MPI+OpenMP+SLK+SLEPC+HDF5_MPI_IO Build                      
+#                http://www.yambo-code.org                            
+#
+optics                           # [R] Linear Response optical properties
+bse                              # [R][BSE] Bethe Salpeter Equation.
+dipoles                          # [R] Oscillator strenghts (or dipoles)
+DIP_Threads=0                    # [OPENMP/X] Number of threads for dipoles
+X_Threads=0                      # [OPENMP/X] Number of threads for response functions
+K_Threads=0                      # [OPENMP/BSK] Number of threads for response functions
+NonPDirs= "XYZ"                 # [X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)
+% MolPos
+ 0.000000 | 0.000000 | 0.000000 |        # [X/BSS] Molecule coord in supercell, 0.5 is the middle
+%
+BSEmod= "retarded"               # [BSE] resonant/retarded/coupling
+BSKmod= "IP"                     # [BSE] IP/Hartree/HF/ALDA/SEX/BSfxc
+CUTGeo= "ws x"                   # [CUT] Coulomb Cutoff geometry: box/cylinder/sphere/ws X/Y/Z/XY..
+CUTwsGvec= 0.700000              # [CUT] WS cutoff: number of G to be modified
+Lkind= "Lbar"                    # [BSE] Lbar (default) / full
+% DipBands
+    1 | 500 |                       # [DIP] Bands range for dipoles
+%
+DipBandsALL                   # [DIP] Compute all bands range, not only valence and conduction
+DipApproach= "R-space x"         # [DIP] [G-space v/R-space x/Covariant/Shifted grids]
+DipComputed= "R P V"             # [DIP] [default R P V; extra P2 Spin Orb]
+#DipPDirect                    # [DIP] Directly compute <v> also when using other approaches for dipoles
+ShiftedPaths= ""                 # [DIP] Shifted grids paths (separated by a space)
+DbGdQsize= 1.000000              # [X,DbGd][o/o] Percentual of the total DbGd transitions to be used
+Gauge= "length"                  # [BSE/X] Gauge (length|velocity)
+BSENGexx=  7382341         RL    # [BSK] Exchange components
+#ALLGexx                       # [BSS] Force the use use all RL vectors for the exchange part
+#NoCondSumRule                 # [BSE/X] Do not impose the conductivity sum rule in velocity gauge
+#MetDamp                       # [BSE] Define \w+=sqrt(\w*(\w+i\eta))
+BSEprop= "abs dich trace esrt"                   # [BSE] abs/kerr/magn/dichr trace
+% PL_weights
+ 1.000000 | 1.000000 | 1.000000 |        # [PL] [cc] Weights of the carthesian components of the emitted radiation
+%
+DrudeWBS= ( 0.000000 , 0.000000 )  eV    # [BSE] Drude plasmon
+#Reflectivity                  # [BSS] Compute reflectivity at normal incidence
+% BSEQptR
+ 1 | 1 |                             # [BSK] Transferred momenta range
+%
+% BSEBands
+    1 | 500 |                       # [BSK] Bands range
+%
+BSKCut= 0.000000                 # [BSK] Cutoff on the BSE Kernel, 0=full 1=none
+% BSEEhEny
+-1.000000 |-1.000000 |         eV    # [BSK] Electron-hole energy range
+%
+% BSehWind
+ 100.0000 | 100.0000 |               # [BSK] [o/o] E/h coupling pairs energy window
+%
+% BEnRange
+  0.00000 | 20.00000 |         eV    # [BSS] Energy range
+%
+% BDmRange
+ 0.050000 | 0.050000 |         eV    # [BSS] Damping range
+%
+BDmERef= 0.000000          eV    # [BSS] Damping energy reference
+BEnSteps= 4000                  # [BSS] Energy steps
+% BLongDir
+ 1.000000 | 0.000000 | 0.000000 |        # [BSS] [cc] Electric Field
+%
