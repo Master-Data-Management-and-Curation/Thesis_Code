@@ -1,11 +1,16 @@
+
 Updated version: Jul 14th, 2025
 
 This repo contains the contributions related to E. Molteni's MDMC internship work 
 on adding functionalities to some NOMAD parsers for electronic structure codes.
+See also MDMC master thesis "Extending NOMAD schemas for the UMIL NFFA-DI Theory &
+Simulation Installation, with a focus on the Yambo code", DOI: 10.5281/zenodo.15691481
 
 # Note: 
 The NOMAD parsers named parser.py mentioned below, part of NOMAD electronic-parsers, 
-can only run within the NOMAD platform (https://nomad-lab.eu/nomad-lab/) or on a local NOMAD Oasis (https://nomad-lab.eu/nomad-lab/nomad-oasis.html), in both of which also the .../electronic-parsers/tree/develop/tests folder is present, when required.
+can only run within the NOMAD platform (https://nomad-lab.eu/nomad-lab/) or on a local NOMAD Oasis (https://nomad-lab.eu/nomad-lab/nomad-oasis.html), 
+in both of which also the .../electronic-parsers/tree/develop/tests folder is present.
+
 Our modified versions only run within a local Oasis (until they will be merged, after successful Pull Requests, into the NOMAD platform).
 
 These parsers can be run, on the corresponding Yambo or Siesta files, either:
@@ -56,17 +61,21 @@ The corresponding standard NOMAD parser, yielding n. atoms / n. coordinates mism
 for systems with different number of atoms of different chemical species,
  is:  https://github.com/nomad-coe/electronic-parsers/tree/develop/electronicparsers/yambo/parser.py
 
+
 * /CH4_db_minimal (from https://github.com/emolteni/electronic-parsers/tree/develop/tests/data/yambo): 
-our "minimal" test folder (containing also a ns.db file within a /SAVE subfolder) for the NOMAD electronic-parsers/test/data/yambo folder, for the above-mentioned implementation regarding atom coordinates; r_setup is the yambo mainfile.
+our "minimal" test folder (containing also a ns.db file within a /SAVE subfolder) for the NOMAD electronic-parsers/test/data/yambo folder, 
+for the above-mentioned implementation regarding atom coordinates; r_setup is the yambo mainfile.
 
 The corresponding general NOMAD test folder for Yambo (without our contribution) is:
 https://github.com/nomad-coe/electronic-parsers/tree/develop/tests/data/yambo
+
 
 * test_yamboparser.py (from https://github.com/emolteni/electronic-parsers/tree/develop/tests):
 file for running all the NOMAD yambo tests present in https://github.com/emolteni/electronic-parsers/tree/develop/tests/data/yambo,
 where I have added the part (test_5) regarding our test folder /CH4_db_minimal.
 
 The corresponding standard NOMAD version (without our contribution) is: https://github.com/nomad-coe/electronic-parsers/tree/develop/tests/test_yamboparser.py
+
 
 
 
@@ -87,6 +96,7 @@ The corresponding version in the general NOMAD is:  https://github.com/nomad-coe
 
 * /TrpTyr4_Yambo-IP :  this is a folder with Yambo data, where in particular the two r* files are considered by NOMAD as mainfiles, and the o*alpha*, o*eps*, o*eel* are, respectively, the Yambo output files containing: absorption spectrum as polarizability vs energy, absorption spectrum as dielectric function vs energy, EEL spectrum. 
 Note:  when uploading this folder to an Oasis containing our version of parser.py, yambo,py, results,py in the above-mentioned locations, NOMAD will yield a "no representative section system" warning (related to missing info on atom coordinates and cell) due to the absence of a /SAVE/ns.db in this upload (see above explanation in /Yambo_atom_coords), but it will nevertheless parse and plot the spectra, since this part is independent of the parsing of atom coors etc.
+
 
 
 

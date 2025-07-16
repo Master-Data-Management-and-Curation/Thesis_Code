@@ -1,0 +1,137 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create new experiment</title>
+    <link rel="stylesheet" href="{% static 'file_manager/css/styles.css' %}">
+    <style>
+        main {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        form p label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 1vh;
+        }
+
+        form p {
+            margin-bottom: 2vh;
+            text-align: left;
+        }
+
+        input[type="file"], input[type="text"], select, textarea {
+            width: 100%;
+            font-size: 2vh;
+            padding: 1vh;
+            margin-bottom: 1vh;
+            border: 1px solid #ccc;
+            border-radius: 0.5vh;
+            box-sizing: border-box;
+        }
+
+        button[type="submit"] {
+            background-color: #0066cc;
+            color: #fff;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #004999;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Create new experiment</h1>
+    </header>
+    <main>
+        <p>Please fill out the fields below, select the schema, and upload the required files. Once done, a new Nexus file will be created.</p>
+        
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <p>
+                <label for="experiment_type">Experiment Type:</label>
+                <select id="experiment_type" name="experiment_type" required>
+                    {% for experiment in experiment_types %}
+                        <option value="{{ experiment }}">{{ experiment }}</option>
+                    {% endfor %}
+                </select>
+            </p>
+            <p>
+                <label for="operator_name">Operator Name:</label>
+                <input type="text" name="operator_name" id="operator_name" required>
+            </p>
+            <p>
+                <label for="description">Description:</label>
+                <textarea name="description" id="description" rows="4" required></textarea>
+            </p>
+            <p>
+                <label for="material">Material:</label>
+                <select id="material" name="material" onchange="toggleCustomMaterial()">
+                    {% for material in materials %}
+                        <option value="{{ material }}">{{ material }}</option>
+                    {% endfor %}
+                </select>
+
+                <input type="text" id="custom_material" name="custom_material" placeholder="Enter custom material" style="display:none;">
+            </p>
+            <p>
+                <label for="hypothetical_composition">Hypothetical Composition:</label>
+                <input type="text" name="hypothetical_composition" id="hypothetical_composition">
+            </p>
+            <p>
+                <label for="initial_composition">Initial Composition:</label>
+                <input type="text" name="initial_composition" id="initial_composition">
+            </p>
+            <p>
+                <label for="final_composition">Final Composition:</label>
+                <input type="text" name="final_composition" id="final_composition">
+            </p>
+            <p>
+                <label for="hdr_file">HDR File:</label>
+                <input type="file" name="hdr_file" id="hdr_file" accept=".hdr" required>
+            </p>
+            <p>
+                <label for="image_files">Image Files:</label>
+                <input type="file" name="image_files" id="image_files" accept="image/*" multiple required>
+            </p>            
+            <p>
+                <label for="schema_file_name">Schema File:</label>
+                <select name="schema_file_name" id="schema_file_name" required>
+                    <option value="">--Select a schema--</option>
+                    {% for schema_file in schema_files %}
+                        <option value="{{ schema_file }}">{{ schema_file }}</option>
+                    {% endfor %}
+                </select>
+            </p>
+
+            <div class="button-row">
+                <button type="submit" class="button">Create Nexus File</button>
+                <a href="{% url 'admin_dashboard' %}" class="button back-button">Back to Homepage</a>
+            </div>            
+        </form>
+    </main>
+    <footer>
+        <p>&copy; {{ current_year }} LAME Data Management App</p>
+    </footer>
+</body>
+</html>
+
+
+
+<script>
+    function toggleCustomMaterial() {
+        var materialDropdown = document.getElementById("material");
+        var customMaterialInput = document.getElementById("custom_material");
+
+        if (materialDropdown.value === "Other") {
+            customMaterialInput.style.display = "block";
+            customMaterialInput.setAttribute("required", "true");
+        } else {
+            customMaterialInput.style.display = "none";
+            customMaterialInput.removeAttribute("required");
+        }
+    }
+</script>
