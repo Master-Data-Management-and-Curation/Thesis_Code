@@ -1,3 +1,6 @@
+
+Updated version: Jul 14th, 2025
+
 This repo contains the contributions related to E. Molteni's MDMC internship work 
 on adding functionalities to some NOMAD parsers for electronic structure codes.
 See also MDMC master thesis "Extending NOMAD schemas for the UMIL NFFA-DI Theory &
@@ -5,7 +8,9 @@ Simulation Installation, with a focus on the Yambo code", DOI: 10.5281/zenodo.15
 
 # Note: 
 The NOMAD parsers named parser.py mentioned below, part of NOMAD electronic-parsers, 
-can only run within the NOMAD platform (https://nomad-lab.eu/nomad-lab/) or on a local NOMAD Oasis (https://nomad-lab.eu/nomad-lab/nomad-oasis.html), in both of which also the .../electronic-parsers/tree/develop/tests folder is present.
+can only run within the NOMAD platform (https://nomad-lab.eu/nomad-lab/) or on a local NOMAD Oasis (https://nomad-lab.eu/nomad-lab/nomad-oasis.html), 
+in both of which also the .../electronic-parsers/tree/develop/tests folder is present.
+
 Our modified versions only run within a local Oasis (until they will be merged, after successful Pull Requests, into the NOMAD platform).
 
 These parsers can be run, on the corresponding Yambo or Siesta files, either:
@@ -24,9 +29,7 @@ in (b) it must be specified in the command) is the "mainfile" (which is a r* fil
 also in those cases where the data we are interested in are in a different file
 (a o* file for Yambo spectra, the ns.db file for Yambo coordinates, the dos file for Siesta DOS).
 
-Our Spectra_plotting_EMvers_forgithubrepo.ipynb in the /Yambo_spectra folder 
-instead can be run on a jupyterlab installed on a computer where a local Oasis is present:
-indeed it imports and uses some of NOMAD classes and quantities.  
+
 
 
 
@@ -58,12 +61,14 @@ The corresponding standard NOMAD parser, yielding n. atoms / n. coordinates mism
 for systems with different number of atoms of different chemical species,
  is:  https://github.com/nomad-coe/electronic-parsers/tree/develop/electronicparsers/yambo/parser.py
 
+
 * /CH4_db_minimal (from https://github.com/emolteni/electronic-parsers/tree/develop/tests/data/yambo): 
 our "minimal" test folder (containing also a ns.db file within a /SAVE subfolder) for the NOMAD electronic-parsers/test/data/yambo folder, 
 for the above-mentioned implementation regarding atom coordinates; r_setup is the yambo mainfile.
 
 The corresponding general NOMAD test folder for Yambo (without our contribution) is:
 https://github.com/nomad-coe/electronic-parsers/tree/develop/tests/data/yambo
+
 
 * test_yamboparser.py (from https://github.com/emolteni/electronic-parsers/tree/develop/tests):
 file for running all the NOMAD yambo tests present in https://github.com/emolteni/electronic-parsers/tree/develop/tests/data/yambo,
@@ -72,28 +77,27 @@ where I have added the part (test_5) regarding our test folder /CH4_db_minimal.
 The corresponding standard NOMAD version (without our contribution) is: https://github.com/nomad-coe/electronic-parsers/tree/develop/tests/test_yamboparser.py
 
 
+
+
 # /Yambo_spectra: adding spectra parsing (and plotting) functionality in the NOMAD Yambo parser 
 
-* Spectra_plotting_EMvers_forgithubrepo.ipynb: our local parser for Yambo spectra only.
-Allows for yambo spectra files as o* files with either 3 or 5 columns of data,
-using a regular expression such as to match the various possible formats of spectra headers, i.e.:
-E/ev[1]            ALPHA-Im[2]        ALPHA-Re[3]        (ALPHAo-Im[4]       ALPHAo-Re[5])
-or
-E/ev[1]            EPS-Im[2]          EPS-Re[3]          (EPS-Im[4]          EPS-Re[5])
-where I have indicated with (.....)  those columns which are not always present.
+For this implementation, we have made a Pull Request on the NOMAD github repo:
+https://github.com/nomad-coe/electronic-parsers/pull/292
 
-The columns to be plotted are the first (column 0 according to python, excitation energies) 
-and the second (column 1 according to python,  intensities).
 
-This version works on jupyterlab;  our version of the NOMAD Yambo parser containing this part for specctra (adapted for the NOMAD platform) does not work yet in our Oasis 
-(no warning, no error messages, yet no spectra plotted), possibly due to issues on which subparser to use
-in order to parse the correct file, which is a o* file, not a r* mainfile.
-The fact that our local version of the parser works should ensure that the parts about 
-matching the specific formats of the headers and columns of data in the file are correct. 
+Content of the /Yambo_spectra folder:
 
-* o-R_methylox_TDLDA.alpha_q1_slepc_alda_bse: test Yambo spectrum file to be parsed
+* parser.py (from https://github.com/Jajar26/electronic-parsers/tree/develop/electronicparsers/yambo): modified NOMAD Yambo parser where we have implemented the parsing of several types of optical spectra (in particular: optical absorption either as polarizability vs energy or as dielectric function vs energy;  EELS): spectra are dealt with in the "to_values" function, within parse_calculation. The columns to be plotted are the first (column 0 according to python, excitation energies) and the second (column 1 according to python,  intensities).
+The corresponding version in the general NOMAD is:  https://github.com/nomad-coe/electronic-parsers/tree/develop/electronicparsers/yambo/parser.py
 
-The corresponding standard NOMAD parser is:  https://github.com/nomad-coe/electronic-parsers/tree/develop/electronicparsers/yambo/parser.py
+* yambo.py (from https://github.com/Jajar26/electronic-parsers/tree/develop/electronicparsers/yambo/metainfo):  here we have added the "sp_type" quantity, which we use in the above-mentioned modified Yambo parser, to let the parser identify the type of optical spectrum from the Yambo files.   The corresponding version in the general NOMAD is:  https://github.com/nomad-coe/electronic-parsers/tree/develop/electronicparsers/yambo/metainfo/yambo.py
+
+* results.py:  we have modified this piece of code in the “general” part of NOMAD, specifically in: ~/nomad/datamodel (in our local Oasis only, so far) so to add 2 additional spectra types (Polarizabiliy and Dielectric function) in the class Spectra.  The corresponding version in the general NOMAD is: https://github.com/nomad-coe/nomad/blob/develop/nomad/datamodel/results.py
+
+* /TrpTyr4_Yambo-IP :  this is a folder with Yambo data, where in particular the two r* files are considered by NOMAD as mainfiles, and the o*alpha*, o*eps*, o*eel* are, respectively, the Yambo output files containing: absorption spectrum as polarizability vs energy, absorption spectrum as dielectric function vs energy, EEL spectrum. 
+Note:  when uploading this folder to an Oasis containing our version of parser.py, yambo,py, results,py in the above-mentioned locations, NOMAD will yield a "no representative section system" warning (related to missing info on atom coordinates and cell) due to the absence of a /SAVE/ns.db in this upload (see above explanation in /Yambo_atom_coords), but it will nevertheless parse and plot the spectra, since this part is independent of the parsing of atom coors etc.
+
+
 
 
 # /Siesta_DOS: adding electronic Density of States (DOS) parsing (and plotting) functionality in the NOMAD Siesta parser 
