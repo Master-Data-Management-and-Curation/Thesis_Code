@@ -33,8 +33,10 @@ def delayed_call(delay_seconds):
 #         return None, False
 def get_authentication_token(nomad_url):
     '''Get the token for accessing your NOMAD unpublished uploads remotely'''
-    username = ''  # Consider moving to environment variables
-    password = ''      # Consider moving to environment variables
+    #username = 'mmarella@sissa.it'  # Consider moving to environment variables
+    #password = 'jezz09112000'      # Consider moving to environment variables
+    username = 'mattia.mare'  # Consider moving to environment variables
+    password = 'Jezz09112000?'      # Consider moving to environment variables
 
     try:
         response = requests.get(
@@ -53,15 +55,18 @@ def get_authentication_token(nomad_url):
 
     except requests.HTTPError as http_err:
         print(f'HTTP error occurred: {http_err} - Response: {response.text}')
-        return None, False
+        raise Exception(f"HTTP error: {http_err}")  # Raise an exception for HTTP errors
+        #return None, False
 
     except requests.RequestException as req_err:
         print(f'Request error occurred: {req_err}')
-        return None, False
+        raise Exception(f"Request error: {req_err}")  # Raise an exception for request errors
+        #return None, False
 
     except Exception as e:
         print(f'Unexpected error trying to get authentication token:\n{e}')
-        return None, False
+        raise Exception(f"Unexpected error to get token: {e}")  # Raise an exception for unexpected errors
+        #return None, False
 
 
 # @delayed_call(delay_seconds=5)  # waits 5 seconds before execution
@@ -107,15 +112,18 @@ def upload_to_NOMAD(nomad_url, token, upload_file):
 
         except requests.HTTPError as http_err:
             print(f"HTTP error occurred: {http_err} - Response: {response.text}")
-            return None, False
+            raise Exception(f"HTTP error: {http_err} - Response: {response.text}")  # Raise an exception for HTTP errors
+            #return None, False
 
         except requests.RequestException as req_err:
             print(f"Request error occurred: {req_err}")
-            return None, False
+            raise Exception(f"Request error: {req_err}")
+            #return None, False
 
         except Exception as e:
             print(f"Unexpected error uploading to NOMAD:\n{e}")
-            return None, False
+            raise Exception(f"Unexpected error in upload: {e}")
+            #return None, False
 
 # def check_upload_status(nomad_url, token, upload_id):
 #     '''
@@ -160,15 +168,18 @@ def check_upload_status(nomad_url, token, upload_id):
 
     except requests.HTTPError as http_err:
         print(f"HTTP error occurred: {http_err} - Response: {response.text}")
-        return None, False
+        raise Exception(f"HTTP error: {http_err} - Response: {response.text}")  # Raise an exception for HTTP errors
+        #return None, False
 
     except requests.RequestException as req_err:
         print(f"Request error occurred: {req_err}")
-        return None, False
+        raise Exception(f"Request error: {req_err}")  # Raise an exception for request errors
+        #return None, False
 
     except Exception as e:
         print(f"Unexpected error checking upload status:\n{e}")
-        return None, False
+        raise Exception(f"Unexpected error in status check: {e}")
+        #return None, False
 
 # @delayed_call(delay_seconds=2)  # waits 2 seconds before execution  
 # def wait_for_upload_completion(nomad_url, token, upload_id, interval=5, timeout=30):
@@ -205,28 +216,34 @@ def wait_for_upload_completion(nomad_url, token, upload_id, interval=5, timeout=
 
     Returns the final status message if successful, or returns None if it fails.
     '''
-    start_time = time.time()
-    while True:
-        # Check if the timeout is reached
-        if time.time() - start_time > timeout:
-            print("Timeout reached before upload completion.")
-            return None
+    try:
+        start_time = time.time()
+        while True:
+            # Check if the timeout is reached
+            if time.time() - start_time > timeout:
+                print("Timeout reached before upload completion.")
+                return None
 
-        # Checking upload status
-        status_message, success = check_upload_status(nomad_url, token, upload_id)
+            # Checking upload status
+            status_message, success = check_upload_status(nomad_url, token, upload_id)
 
-        if not success:
-            print("Failed to retrieve upload status. Retrying...")
+            if not success:
+                print("Failed to retrieve upload status. Retrying...")
+                time.sleep(interval)
+                continue  # Retry instead of raising an exception
+
+            if status_message == 'Process process_upload completed successfully':
+                print('Upload completed successfully!')
+                return status_message  # Successfully completed
+            if status_message == 'Process publish_upload completed successfully':
+                print('Publish completed successfully!')
+                return status_message  # Successfully completed
+            # Still processing, keep waiting
+            print(f"Current status: {status_message}. Waiting...")
             time.sleep(interval)
-            continue  # Retry instead of raising an exception
-
-        if status_message == 'Process process_upload completed successfully':
-            print('Upload completed successfully!')
-            return status_message  # Successfully completed
-
-        # Still processing, keep waiting
-        print(f"Current status: {status_message}. Waiting...")
-        time.sleep(interval)
+    except Exception as e:
+        print(f"Unexpected error while waiting for upload completion: {e}")
+        raise e
 
 # def get_upload_entries(nomad_url, token, upload_id):
 #     """
@@ -266,8 +283,6 @@ def wait_for_upload_completion(nomad_url, token, upload_id, interval=5, timeout=
 #         print(f"Request error occurred: {err}")
 #         raise
 
-# import requests
-import requests
 
 def get_upload_entries(nomad_url, token, upload_id):
     """
@@ -283,7 +298,7 @@ def get_upload_entries(nomad_url, token, upload_id):
             - data (dict or None): JSON data of the response if successful.
             - success (bool): True if successful, False otherwise.
     """
-    url = f"{nomad_url}uploads/{upload_id}/entries"
+    url = f"{nomad_url}uploads/{upload_id}/entries?page_size=200"
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/json"
@@ -303,15 +318,19 @@ def get_upload_entries(nomad_url, token, upload_id):
 
     except requests.HTTPError as http_err:
         print(f"HTTP error occurred: {http_err} - Response: {response.text}")
-        return None, False
+        raise Exception(f"HTTP error: {http_err} - Response: {response.text}")  # Raise an exception for HTTP errors
+        #return None, False
 
     except requests.RequestException as req_err:
         print(f"Request error occurred: {req_err}")
-        return None, False
+        raise Exception(f"Request error: {req_err}")
+        #return None, False
 
     except Exception as e:
         print(f"Unexpected error fetching upload entries: {e}")
-        return None, False
+        raise Exception(f"Unexpected error in fetching entries: {e}")
+        #return None, False
+    
 
 # def delete_upload(nomad_url, token, upload_id):
 #     """
@@ -381,76 +400,188 @@ def delete_upload(nomad_url, token, upload_id):
 
     except requests.HTTPError as http_err:
         print(f"HTTP error occurred: {http_err} - Response: {response.text}")
-        return None, False
+        raise Exception(f"HTTP error: {http_err} - Response: {response.text}")  # Raise an exception for HTTP errors
+        #return None, False
 
     except requests.RequestException as req_err:
         print(f"Request error occurred: {req_err}")
-        return None, False
+        raise Exception(f"Request error: {req_err}")
+        #return None, False
 
     except Exception as e:
         print(f"Unexpected error occurred while deleting upload: {e}")
-        return None, False
+        raise Exception(f"Unexpected error in deleting upload: {e}")
+        #return None, False
+
+def get_entry_archive(nomad_url, token, entry_id):
+    """
+    Fetch the full archive (including logs, warnings, errors, and parsed data)
+    for a given entry ID from NOMAD.
+
+    Args:
+        nomad_url (str): Base URL of the NOMAD API (must end with '/api/v1/').
+        token (str): Bearer authentication token.
+        entry_id (str): The entry ID whose archive is requested.
+
+    Returns:
+        tuple: (archive_dict, success) where:
+            - archive_dict (dict or None): Parsed archive data if successful.
+            - success (bool): True if successful, False otherwise.
+    """
+    url = f"{nomad_url}entries/{entry_id}/archive"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json"
+    }
+
+    try:
+        response = requests.get(url, headers=headers, timeout=30)
+        #print(f"GET {url} → {response.status_code}")
+        response.raise_for_status()
+
+        archive = response.json()
+        return archive, True
+
+    except requests.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err} - Response: {response.text}")
+        raise Exception(f"HTTP error: {http_err} - Response: {response.text}")  # Raise an exception for HTTP errors
+    except requests.RequestException as req_err:
+        print(f"Request error occurred: {req_err}")
+        raise Exception(f"Request error: {req_err}")  # Raise an exception for request errors
+    except Exception as e:
+        print(f"Unexpected error occurred while fetching entry archive: {e}")
+        raise Exception(f"Unexpected error in fetching entry archive: {e}")
+
+    return None, False
+
+def publish_file(nomad_url, token, upload_id, to_central_nomad=False):
+    """
+    Publish a NOMAD upload.
+
+    Args:
+        nomad_url (str): Base URL of the NOMAD API (must end with '/api/v1/').
+        token (str): Bearer authentication token.
+        upload_id (str): ID of the upload to publish.
+        to_central_nomad (bool): Whether to publish to central NOMAD.
+
+    Returns:
+        tuple: (response_data, success) where:
+            - response_data (dict or None): JSON response from the server.
+            - success (bool): True if published successfully, False otherwise.
+    """
+    url = f"{nomad_url}uploads/{upload_id}/action/publish?to_central_nomad={str(to_central_nomad).lower()}"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json"
+    }
+
+    try:
+        response = requests.post(url, headers=headers, timeout=30)
+        response.raise_for_status()
+        print(f"Successfully published upload {upload_id}.")
+        return response.json(), True
+
+    except requests.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err} - Response: {response.text}")
+        raise Exception(f"HTTP error: {http_err} - Response: {response.text}")
+
+    except requests.RequestException as req_err:
+        print(f"Request error occurred: {req_err}")
+        raise Exception(f"Request error: {req_err}")
+
+    except Exception as e:
+        print(f"Unexpected error publishing upload: {e}")
+        raise Exception(f"Unexpected error in publish: {e}")
 
 
 def upload_file(file_path = 'nomuploads/PicoTCDv3/PicoTCDv3_steps.zip', autodelete = False):
-    nomad_url = 'http://192.168.157.46:8000/fairdi/nomad/latest/api/v1/'
+    #nomad_url = 'http://192.167.170.104:8000/fairdi/nomad/latest/api/v1/'
+    nomad_url = 'http://192.167.170.104:4080/nomad-oasis/api/v1/'
+    token = upload_id = None
+    try:
+        print('getting authentication token...')
+        token, success = get_authentication_token(nomad_url)
+        # if not success:
+        #     print("Failed to get authentication token. Aborting upload.")
+        #     return None
 
-    print('getting authentication token...')
-    token, success = get_authentication_token(nomad_url)
-    if not success:
-        print("Failed to get authentication token. Aborting upload.")
-        return None
+        print('starting upload...')
+        upload_id, success = upload_to_NOMAD(nomad_url, token, file_path)
+        # if not success:
+        #     print("Failed to upload to NOMAD. Aborting.")
+        #     return None
+        print(f'UPLOAD ID: {upload_id}')
 
-    print('starting upload...')
-    upload_id, success = upload_to_NOMAD(nomad_url, token, file_path)
-    if not success:
-        print("Failed to upload to NOMAD. Aborting.")
-        return None
-    print(f'UPLOAD ID: {upload_id}')
+        last_status_message = wait_for_upload_completion(nomad_url, token, upload_id)
+        if last_status_message is None:
+            print("Upload process did not complete successfully. Aborting.")
+            return None
+        print(last_status_message)
 
-    last_status_message = wait_for_upload_completion(nomad_url, token, upload_id)
-    if last_status_message is None:
-        print("Upload process did not complete successfully. Aborting.")
-        return None
-    print(last_status_message)
-
-    data, success = get_upload_entries(nomad_url, token, upload_id)
-    if not success or data is None:
-        print("Failed to fetch entries. Aborting.")
-        return None
-    print(f"Entry processing failed: {(fails := data['processing_failed'])}")
-    # If there are no failures, proceed to fetch entries
-    if fails == 0:
+        data, success = get_upload_entries(nomad_url, token, upload_id)
+        if not success or data is None:
+            print("Failed to fetch entries. Aborting.")
+            return None
         print('Fetching entries...')
         my_entries = {}
+        logs = []
         for entry in data.get('data', []):
             entry_id = entry.get('entry_id')
             filename = entry.get('mainfile')
             if entry_id and filename:
                 my_entries[filename] = entry_id
-        my_entries = {upload_id: my_entries}
+            log, ok = get_entry_archive(nomad_url, token, entry_id)
+            if ok:
+                logs.append(log)
+        my_entries = {upload_id : my_entries}
+        print('Entries fetched successfully:')
+        print(f"Entry processing failed: {(fails := data['processing_failed'])}")
+        if fails == 0:
+            print('starting publish procedure...')
+            publish_response, success = publish_file(nomad_url, token, upload_id)
+            last_status_message = wait_for_upload_completion(nomad_url, token, upload_id)
+            if last_status_message is None:
+                print("Upload process did not complete successfully. Aborting.")
+                return None
+            print(last_status_message)
+            
+            return my_entries  # Successfully fetched entries
 
-        return my_entries  # Successfully fetched entries
+        # Something went wrong with processing, return None
+        err_msg = f""
+        for i, entry in enumerate(logs):
+            if not entry["data"]["archive"]["metadata"]["processed"]: # false if parsing err
+                generic_err = entry["data"]["archive"]["processing_logs"][1]["errors"]
+                specific_err = entry["data"]["archive"]["processing_logs"][1]["error"]
+                filename = entry["data"]["archive"]["metadata"]["mainfile"]
 
-    # Something went wrong with processing, return None
-    # If autodelete is enabled, attempt to delete the upload
-    if autodelete:
-        print('Deleting upload due to processing failures...')
-        del_log, success = delete_upload(nomad_url, token, upload_id)
-        if not success:
-            print("Failed to delete the upload. Check the server logs.")
-    return None
+                err_msg += f"File: {filename}\nGeneric error: {generic_err}\nSpecific error: {specific_err}\n\n"
+        print(err_msg)
+        raise Exception(f"SOME ENTRIES HAVE BUGS!\n Processing failed for {fails} entries. Check the logs for details:\n{err_msg}")
+    except Exception as e:
+        # If autodelete is enabled, attempt to delete the upload
+        if autodelete and upload_id and token:
+            print('\nDeleting upload due to processing failures...')
+            del_log, success = delete_upload(nomad_url, token, upload_id)
+            # if not success:
+            #     print("Failed to delete the upload. Check the server logs.")
+
+        print(f"Rilancio l'eccezione: ")
+        raise        
+
 
 if __name__ == '__main__': 
     # if upload_steps succeded, go on with other publish, else exit the function
-    if (upload_dict:=upload_file()) is None:
+    #if (upload_dict:=upload_file('nomuploads/isopillar/isopillar_steps.zip')) is None:
+    if (upload_dict:=upload_file('bestmesa.zip')) is None:
         print('Some entries have bugs.\n')
+        print('retry with a well formatted file.\n')
         #return
     # write the json dict in a file in the process_path with pathlib,
     # translate the dict entries in the step list of the father, RENAMEM OUTPUT LIST WITH THE RIGHT NAME
-    output_list = [
-    f"../uploads/{upload_id}/archive/{entry_id}#data"
-    for upload_id, entries in upload_dict.items()
-    for entry_id in entries.values()
-]
+""" output_list = [
+        f"../uploads/{upload_id}/archive/{entry_id}#data"
+        for upload_id, entries in upload_dict.items()
+        for entry_id in entries.values()
+]"""
     
