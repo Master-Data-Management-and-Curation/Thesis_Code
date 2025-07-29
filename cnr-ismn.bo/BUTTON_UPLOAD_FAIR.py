@@ -12,7 +12,7 @@ import shutil
 '''
 def copy_db(task):
     task.copy_database(SQLITE, '/home/jampy/cams/cleanroom.sqlite')
-'''
+
 def update_ids_file(entry_dict: dict, file_path: Path):
     """
     Update the IDs.json file with new entry_dict data following the given schema.
@@ -41,6 +41,69 @@ def update_ids_file(entry_dict: dict, file_path: Path):
 
     # Update the existing data with the new data
     existing_data.update(new_data)
+
+    # Save the updated data back to the file
+    file_path.write_text(json.dumps(existing_data, indent=4), encoding="utf-8")
+'''
+from pathlib import Path
+import json
+
+def load_recipe_file(display_text, main_path):
+    """
+    Loads and parses a JSON file from display_text (e.g., 'file.txt?label').
+    If JSON parsing fails, returns raw content.
+    Returns None if display_text is None or invalid.
+    """
+    if not display_text:
+        return None
+
+    try:
+        # Extract filename before '?' and make sure it's not empty
+        filename = display_text.split('?', 1)[0].strip()
+        if not filename:
+            return None
+
+        # Build the full path
+        full_path = Path(main_path) / 'static' / 'files' / filename
+
+        # Read file content
+        content = full_path.read_text(encoding='utf-8')
+
+        # Try parsing as JSON, fallback to raw text
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError:
+            return content
+
+    except FileNotFoundError:
+        print(f"[ERROR] File not found: {full_path}")
+        return None
+    except Exception as e:
+        print(f"[ERROR] Failed to load file: {e}")
+        return None
+
+
+def update_ids_file(entry_dict: dict, file_path: Path):
+    """
+    Update the IDs.json file with new entry_dict data following the given schema.
+    If the file exists, it's updated; otherwise, it's created.
+    """
+    # Ensure the parent directory exists
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Load existing data from the file if it exists and is valid JSON
+    if file_path.exists():
+        try:
+            existing_data = json.loads(file_path.read_text(encoding="utf-8"))
+            if not isinstance(existing_data, dict):
+                existing_data = {}  # Reset if the file content is not a dict
+        except json.JSONDecodeError:
+            existing_data = {}  # Reset if the file content is invalid JSON
+    else:
+        existing_data = {}
+
+    # Merge the new entries in directly (no more "upload_steps_id" key)
+    existing_data.update(entry_dict)
 
     # Save the updated data back to the file
     file_path.write_text(json.dumps(existing_data, indent=4), encoding="utf-8")
@@ -80,7 +143,7 @@ def get_process_dict(run):
         "steps": [],
     }
     
-def get_base_step_dict(step):
+def get_base_step_dict(step, mainpath):
     # step_number = step.step_number.display_text
     step_room_comments = step.room_comments.display_text
     step_important_notes = step.important.display_text
@@ -97,6 +160,7 @@ def get_base_step_dict(step):
         t.replace(tzinfo=timezone.utc).isoformat() if t is not None else None
         for t in (step.equipment_start_time.value, step.equipment_end_time.value)
     )
+    
     return {
         "name" : step.description.display_text,
         "operator" : step.operator.display_text,
@@ -106,11 +170,13 @@ def get_base_step_dict(step):
         "end_date" : equipment_end_time,
         "step_type" : step.step_type.display_text,
         "notes" : all_comments,
+        "keywords" : getattr(getattr(step, 'keywords', None), 'display_text', None),
+        "recipe_preview" : load_recipe_file(step.recipe_1.display_text, mainpath)
     }
      
 def enrich_step(item, s, step_data, exclude_list):
     
-    print("Valore restituito da s.step_type.display_text:", s.step_type.display_text)
+    print("step_type: ", s.step_type.display_text)
 
     step_type = get_step_type(s, s.step_type.value)
     step = s.task.item_by_ID(step_type).copy()
@@ -200,7 +266,7 @@ def transform_data(s, step_data, step_specific_info):
     if step_info is None:
         return None
     step_mapping = step_info["mapping"]
-    # fetch the transformations needed for the parameters in this step_type, if exist
+    # fetch transformations needed for the params in this step_type, if exist
     step_transforms = step_info.get("transformations", {})
 
     for new_key, old_key in step_mapping.items():
@@ -214,34 +280,47 @@ def transform_data(s, step_data, step_specific_info):
     
     return step_data
 
+def move_process(process_path: Path, dst_path: Path) -> None:
+    """
+    Ensures dst_path (success or fail) exists, then moves the entire 
+    process_path folder beneath it (preserving the process_path name).
+    """
+    dst_path.mkdir(parents=True, exist_ok=True)
+    dst = dst_path / process_path.name
+    if dst.exists():
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        dst = dst_path / f"{process_path.name}_{timestamp}"
+    shutil.move(str(process_path), str(dst))
+
 def upload_fair(item, run_id):
     print(f"Uploading FAIR data for run_id: {run_id}")
     upload = True
     main_path = Path('static') / 'FAIR'
     main_path.mkdir(parents=True, exist_ok=True)
-    success_path = main_path / 'SUCCCESS'
+    success_path = main_path / 'SUCCESS'
     success_path.mkdir(parents=True, exist_ok=True)
+    fail_path = main_path / 'FAIL'
+    fail_path.mkdir(parents=True, exist_ok=True)
     
     # Retrieve the run record
     run = item.task.run.copy()
     run.set_where(id=run_id)
     run.open()
-    
     if not run.rec_count:
-        print("Error: No data found for this run_id")
-        return
+        print(msg:="Error: No data found for this run_id")
+        raise Exception(msg)
     
     # Prepare the folder for this process only if it doesn't already exist in success_path
     process_name = run.run_name.display_text  # The name of the folder to be created
     process_path = main_path / process_name
-    
     # Check if the folder already exists in the success_path
     if not (success_path / process_name).exists():
         process_path.mkdir(parents=True, exist_ok=True)
         print(f"Folder '{process_name}' created successfully in '{main_path}'.")
     else:
-        print(f"Folder '{process_name}' already exists in '{success_path}', skipping creation and no uploading.")
-        return
+        print(msg:=f"Folder '{process_name}' already exists in '{success_path}', skipping creation and no uploading.")
+        raise Exception(msg)
+        
     
     # Prepare JSON data structure
     process_dict = get_process_dict(run)
@@ -259,7 +338,7 @@ def upload_fair(item, run_id):
     steps_path.mkdir(parents=True, exist_ok=True)
     for i, s in enumerate(steps):
         # Get the common parameters
-        step_data = get_base_step_dict(s)
+        step_data = get_base_step_dict(s, Path('.'))
         # Get the specific parameters, and update the 'notes' field in 'step_data'
         step_data, step_specific_info = enrich_step(item, s, step_data, exclude_list)
         # just to get caption and variable name, TO BE DELETED
@@ -281,7 +360,7 @@ def upload_fair(item, run_id):
         # format the data for NOMAD
         step_data = {"data": step_data}
         # save the dict in a dedicated file
-        file_step = steps_path / f"{s.step_number.display_text}.archive.json"
+        file_step = steps_path / f"{int(s.step_number.display_text):03}.archive.json"
         file_step.write_text(json.dumps(step_data, indent=4), encoding="utf-8")
         
         # DELETE THE NEXT LINE WHEN UPLOAD ID WILL BE FETCHED
@@ -292,18 +371,20 @@ def upload_fair(item, run_id):
         json_file_path = f'static/reports/{process_name}_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S%f")}.json'
         with open(json_file_path, 'w') as json_file:
             json_file.write(json_output)
+        return
         
     # ---------------    UPLOAD STEP PHASE    ---------------
     print("\n\n ------ UPLOAD PHASE ------ \n\n")
     #create zip file to upload
-    zip_file_name = process_path / f"{steps_path.name}_zpd" # name of the zip file (without the extension)
-    #shutil.make_archive(str(zip_file_name), 'zip', root_dir=steps_path, base_dir=steps_path.name)
+    zip_file_name = process_path / f"{steps_path.name}_zpd" # without extension
     shutil.make_archive(str(zip_file_name), 'zip', root_dir=steps_path.parent, base_dir=steps_path.name)
     zip_file_path = zip_file_name.with_suffix('.zip')
 
-    if(entry_dict:=api.upload_file(zip_file_path, autodelete=False)) is None: 
-        print('Some entries have bugs...')
-        return
+    try:
+        entry_dict = api.upload_file(zip_file_path, autodelete=False) 
+    except Exception as e:
+        move_process(process_path, fail_path) # move process in fail directory
+        raise
 
     print(entry_dict)
     ids_file = process_path / "IDs.json"
@@ -320,14 +401,32 @@ def upload_fair(item, run_id):
     # save the dict in a dedicated file
     file_process = process_path / f"{process_name}.archive.json"
     file_process.write_text(json.dumps(process_dict, indent=4), encoding="utf-8")
+    
     # ---------------    UPDLOAD FATHER    ---------------
-    if(father_entry:=api.upload_file(file_process, autodelete=False)) is None: # -----------   IMPORT API COLLECTION!!!! E PASSARE ARGOMENTI
-        print('Some entries have bugs...')
-        return        
+    try:
+        father_entry = api.upload_file(file_process, autodelete=False)
+    except Exception as e:
+        move_process(process_path, fail_path) # move process in fail directory
+        raise        
     update_ids_file(father_entry, ids_file)
     #---------------------  output file   -------------------------------
     # json_output = json.dumps(process_dict, indent=4, default=str)
     # print(f'\n\nJSON FILE PREVIEW:\n{json_output}')
     print('\n\n' + '*'*60 + f'\n*{" " * 15}THE UPLOAD PROCESS SUCCEEDED{" " * 15}*\n' + '*'*60 + '\n')
-    return    
+    
+    move_process(process_path, success_path) # move process in succ directory
+    success_message = f"Data for run '{run_id}' has been successfully processed for FAIRness."
+    # though this JS snippet only uses 'msg', you can include other data
+    return {
+        "msg": success_message,
+        "status": "success", # Example additional info
+    }    
+
+    tables = [
+        ["Header", ["step_number", "step_type", "description"]],
+        ["Step General Parameters", ["description", "operator", "wafers", "planned_date", "done", "step_run_name"]],
+        ["Comments", ["important", "comments", "comments_after"]],
+        ["Room information", ["room", "room_comments"]],
+        ["Timing information", ["operator_start_time", "operator_end_time", "equipment_start_time", "equipment_end_time"]]
+    ]
 
