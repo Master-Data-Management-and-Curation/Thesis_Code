@@ -10,7 +10,7 @@ to_bool = lambda x: True if x == "Yes" else (False if x == "No" else None)
 
 cams2nomad = {
     "Labeling and Cleaning" :{
-        "m_def" : "fabrication_facilities.schema_packages.transform.LabelingCleaning",
+        "m_def" : "fabrication_facilities.schema_packages.steps.transform.LabelingCleaning",
 		"mapping" : {
 		    "wafer_cleaning_rca_required":"",
 		    "wafer_label_position":"labeled_face",
@@ -30,7 +30,7 @@ cams2nomad = {
 		}
 	},
     "Stripping" :{
-        "m_def" : "fabrication_facilities.schema_packages.remove.Stripping",
+        "m_def" : "fabrication_facilities.schema_packages.steps.remove.Stripping",
 		"mapping" : {
 		    "stripping_type":"stripping_type",
 		    "short_name":"material_to_remove",
@@ -47,7 +47,7 @@ cams2nomad = {
 		}
 	},
     "Wet Etching" :{
-        "m_def" : "fabrication_facilities.schema_packages.remove.WetEtching",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.remove.WetEtching",    
 		"mapping" : {
 		    "etching_type":"",
 		    "short_name":"material_to_etch",
@@ -64,7 +64,7 @@ cams2nomad = {
 		}
 	},
     "Coating" :{
-        "m_def" : "fabrication_facilities.schema_packages.add.Spin_Coating",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.add.Spin_Coating",    
 		"mapping" : {
 		    "dewetting_duration":"De_wetting",
 		    "dewetting_temperature":"", # const value = 110, see here below
@@ -86,14 +86,14 @@ cams2nomad = {
 			"baking_duration": to_minutes_ignore,
             "dewetting_temperature": lambda _ : 110,
 			"exposure_required":to_bool,
-			"hdms_required":choice,
-			"baking_required":choice,
-			"peb_required":choice,
+			"hdms_required":to_bool,
+			"baking_required":to_bool,
+			"peb_required":to_bool,
 
 		}
 	},
     "Wet Cleaning" :{
-        "m_def" : "fabrication_facilities.schema_packages.remove.WetCleaning",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.remove.WetCleaning",    
 		"mapping" : {
 		    "removing_solution_proportions":"",
 		    "removing_solution":"solution_type",
@@ -123,7 +123,7 @@ cams2nomad = {
 		}
 	},
     "LPCVD deposition" :{
-        "m_def" : "fabrication_facilities.schema_packages.add.ICP_CVD",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.add.ICP_CVD",    
 		"mapping" : {
 		    "short_name":"deposited_material",
 		    "job_number":"process_number",
@@ -136,7 +136,7 @@ cams2nomad = {
 		"transformations" : {}
 	},
     "Track" :{
-        "m_def" : "fabrication_facilities.schema_packages.transform.Track",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.transform.Track",    
 		"mapping" : {
 			"dewetting_duration":"DeWetting",
             "dewetting_temperature":"",
@@ -177,7 +177,7 @@ cams2nomad = {
 		}
 	},
     "Track 2" :{
-        "m_def" : "fabrication_facilities.schema_packages.transform.Track",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.transform.Track",    
 		"mapping" : {
 			"dewetting_duration":"DeWetting",
             "dewetting_temperature":"",
@@ -218,7 +218,7 @@ cams2nomad = {
 		}
 	},
     "RIE" :{
-        "m_def" : "fabrication_facilities.schema_packages.remove.RIE",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.remove.RIE",    
 		"mapping" : {
             "depth_target":"In_depth",
             "duration_target":"In_time",
@@ -234,7 +234,7 @@ cams2nomad = {
 		"transformations" : {}
 	},
     "RIE Metal" :{
-        "m_def" : "fabrication_facilities.schema_packages.remove.RIE",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.remove.RIE",    
 		"mapping" : {
             "depth_target":"required_depth",
             "duration_target":"In_time",
@@ -250,7 +250,7 @@ cams2nomad = {
 		"transformations" : {}
 	},
     "RIE PlasmaPro" :{
-        "m_def" : "fabrication_facilities.schema_packages.remove.RIE",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.remove.RIE",    
 		"mapping" : {
             "depth_target":"depth_IN",
             "duration_target":"time_IN",
@@ -271,7 +271,7 @@ cams2nomad = {
 		}
 	},
     "Thermal oxidation" :{
-        "m_def" : "fabrication_facilities.schema_packages.transform.ThermalOxidation",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.transform.ThermalOxidation",    
 		"mapping" : {
             "oxidation_type":"oxidation_type",
             "thickness_target":"In_Thickness",
@@ -288,7 +288,7 @@ cams2nomad = {
 		}
 	},
     "LTO Densification" :{
-        "m_def" : "fabrication_facilities.schema_packages.transform.LTODensification",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.transform.LTODensification",    
 		"mapping" : {
             "densification_type":"lto_densification_type",
             "temperature_target":"densification_temperature",
@@ -302,7 +302,7 @@ cams2nomad = {
 		"transformations" : {}
 	},
     "Sputtering" :{# non serve
-        "m_def" : "fabrication_facilities.schema_packages.add.Sputtering",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.add.Sputtering",    
 		"mapping" : {
 		    "short_name":"material",
             "duration_measured":"duration",         
@@ -321,7 +321,7 @@ cams2nomad = {
 		}
 	},
     "Sputtering-2" :{
-        "m_def" : "fabrication_facilities.schema_packages.add.Sputtering",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.add.Sputtering",    
 		"mapping" : {
 		    "short_name":"deposition_material",
             "duration_measured":"Out_time",         
@@ -340,7 +340,7 @@ cams2nomad = {
 		}
 	},
     "Sputtering KSE" :{
-        "m_def" : "fabrication_facilities.schema_packages.add.Sputtering",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.add.Sputtering",    
 		"mapping" : {
             "power":"dep_power",
 		    "short_name":"deposited_material",
@@ -363,7 +363,7 @@ cams2nomad = {
 		}
 	},
     "SOG" :{
-        "m_def" : "fabrication_facilities.schema_packages.add.SOG",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.add.SOG",    
 		"mapping" : {
 		    "short_name":"subatrate_material",
             "thickness_measured":"",
@@ -378,7 +378,7 @@ cams2nomad = {
 		}
 	},
     "DRIE" :{
-        "m_def" : "fabrication_facilities.schema_packages.remove.DRIE",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.remove.DRIE",    
 		"mapping" : {
             "short_name":"etched_material",
             "duration_target":"In_duration",
@@ -397,7 +397,7 @@ cams2nomad = {
 		}
 	},
     "DRIE Cobra" :{
-        "m_def" : "fabrication_facilities.schema_packages.remove.DRIE",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.remove.DRIE",    
 		"mapping" : {
             "short_name":"etched_materia",
             "duration_target":"IN_time",
@@ -416,7 +416,7 @@ cams2nomad = {
 		}
 	},
     "Silicon Wet Micromachining" :{
-        "m_def" : "fabrication_facilities.schema_packages.remove.WetEtching",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.remove.WetEtching",    
 		"mapping" : {
 		    "etching_solution":"solution_type",
 		    "etching_solution_proportions":"solution_concentration",
@@ -432,7 +432,7 @@ cams2nomad = {
 		}
 	},
     "Bonding" :{
-        "m_def" : "fabrication_facilities.schema_packages.add.Bonding",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.add.Bonding",    
 		"mapping" : {
 			"wafer_bonding_type":"bonding_type",
 			"job_number":"process_number",
@@ -452,7 +452,7 @@ cams2nomad = {
 		}
 	},
     "Annealing" :{
-        "m_def" : "fabrication_facilities.schema_packages.transform.Annealing",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.transform.Annealing",    
 		"mapping" : {
 			"short_name":"material",
 			"temperature_start":"starting_temperature",
@@ -471,7 +471,7 @@ cams2nomad = {
 		}
 	},
     "Metal Annealing" :{
-        "m_def" : "fabrication_facilities.schema_packages.transform.Annealing",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.transform.Annealing",    
 		"mapping" : {
 			"short_name":"annealed_material_",
 			"duration_measured":"annealing_duration",
@@ -500,7 +500,7 @@ cams2nomad = {
 		"transformations" : {}
 	},
     "SOD" :{
-        "m_def" : "fabrication_facilities.schema_packages.transform.SOD",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.transform.SOD",    
 		"mapping" : {
 			"short_name":"sod_tipe",
 			"spin_dipHF_duration":"HF",
@@ -521,7 +521,7 @@ cams2nomad = {
 		}
 	},
     "Dicing" :{
-        "m_def" : "fabrication_facilities.schema_packages.transform.Dicing",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.transform.Dicing",    
 		"mapping" : {
 			"blade_name":"dicing_blade",
 			"depth_target":"dicing_depth",
@@ -540,7 +540,7 @@ cams2nomad = {
 		}
 	},
     "Doping" :{
-        "m_def" : "fabrication_facilities.schema_packages.transform.Doping",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.transform.Doping",    
 		"mapping" : {
 			"doping_type":"doping_type",
 			"duration_target":"duration",
@@ -552,7 +552,7 @@ cams2nomad = {
 		"transformations" : {}
 	},
     "Electron Gun KSE" :{
-        "m_def" : "fabrication_facilities.schema_packages.add.ElectronGun",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.add.ElectronGun",    
 		"mapping" : {
 			"chamber_pressure":"cambi_vac",
 			"short_name":"deposited_material",
@@ -568,7 +568,7 @@ cams2nomad = {
 		"transformations" : {}
 	},
     "Electron Gun" :{
-        "m_def" : "fabrication_facilities.schema_packages.add.ElectronGun",    
+        "m_def" : "fabrication_facilities.schema_packages.steps.add.ElectronGun",    
 		"mapping" : {
 			"chamber_pressure":"chamber_vacuum",
 			"short_name":"deposited_material",
