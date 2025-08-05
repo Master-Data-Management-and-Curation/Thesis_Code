@@ -129,3 +129,6 @@ Fiji must be installed separately for `.js` script.
 - The `.dm4` structure is parsed using open-source tools, ensuring transparency and reproducibility.
 - ElabFTW serves as the centralized metadata repository and documentation tool, enabling automation and collaboration.
 
+## Licence
+
+Check Licence file
