@@ -6,7 +6,7 @@ This repository contains the software developed during the internship at CNR-IFN
 
 -   **LabLogbook**: Integrated within the existing UdyniManagement Django project, LabLogbook is a web-based application designed for efficient experiment and sample management, coupled with a comprehensive digital logbook. Furthermore, it exposes RESTful APIs, laying the groundwork for the future development of a robust FAIR (Findable, Accessible, Interoperable, Reusable) data infrastructure within the UDynI laboratories.
 
-    **Important Note**: LabLogbook is not a standalone application. To run it, is necessary to set up the UdyniManagement project first by following the instructions provided below.
+    **Important Note**: LabLogbook is not a standalone application. To run it, it is necessary to set up the UdyniManagement project first by following the instructions provided below.
 
 
 ## UdyniManagement Setup
@@ -46,7 +46,7 @@ sudo apt install libsasl2-dev
 
 ### Django Project Configuration
 
-1.  **Apply Migrations:** These commands ensure your database schema is up-to-date with the project's models.
+1.  **Apply Migrations:** These commands ensure your database schema is up to date with the project's models.
 
     ```bash
     python3 manage.py makemigrations
